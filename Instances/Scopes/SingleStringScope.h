@@ -3,6 +3,7 @@
 
 #include "DecoderBase/Scope.h"
 #include "Instances/NodeKinds/SingleStringNK.h"
+#include <string>
 
 using namespace decoder;
 using namespace instances::nodekinds;
@@ -24,6 +25,10 @@ namespace instances {
 
             // Shortness does not affect the scope.
             Scope *changeShortness(bool value) override {return this;}
+
+            const std::string &getString() {
+                return ((SingleStringNK *)getCache().Single)->getString();
+            }
         };
     }
 }
