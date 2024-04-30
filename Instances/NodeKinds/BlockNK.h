@@ -3,11 +3,14 @@
 
 #include "DecoderBase/ASTNodeKind.h"
 #include "DecoderBase/Scope.h"
+#include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/StatementScope.h"
+#include <cassert>
 #include <vector>
 
 using namespace decoder;
 using namespace instances::scopes;
+using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
@@ -38,6 +41,16 @@ namespace instances {
                 // Otherwise seed + 2
                 int ChildrenCount = (Values[0] & 1) + 2;
                 while(ChildrenCount--) OperandsScopes.push_back(StatementScope::getLarge());
+            }
+
+            void print(Printer *P, int Part, bool Last) const override {
+                SimplePrinter *SP = dynamic_cast<SimplePrinter *>(P);
+                assert(SP);
+
+                if(Part == 0)
+                    SP->startBlock();
+                if(Last)
+                    SP->endBlock();
             }
         };
     }

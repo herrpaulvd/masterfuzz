@@ -4,17 +4,20 @@
 #include "DecoderBase/ASTNodeKind.h"
 #include "DecoderBase/Scope.h"
 #include "DecoderBase/Utils.h"
+#include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/ExpressionScope.h"
 #include "Instances/Scopes/FormatStringScope.h"
 #include "Instances/Scopes/SingleStringScope.h"
 #include "Instances/Scopes/StatementScope.h"
 #include <algorithm>
+#include <cassert>
 #include <initializer_list>
 #include <string>
 #include <vector>
 
 using namespace decoder;
 using namespace instances::scopes;
+using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
@@ -155,6 +158,9 @@ namespace instances {
                 const Function &F = Functions[selectInRange(0, LastF, LastF, Values[0])];
                 int VarargsCount = Values[1] & 0b11;
 
+                // Push function name as argument.
+                OperandsScopes.push_back(F.NameScope);
+
                 int FormalParamCount = F.ParamScopes.size();
                 int LastParam = FormalParamCount - 1;
                 int ActualParamCount = F.HasVarArgs ? FormalParamCount : LastParam + VarargsCount;
@@ -162,6 +168,42 @@ namespace instances {
                     int Formal = std::min(Actual, LastParam);
                     OperandsScopes.push_back(F.CastScopes[Formal]);
                     OperandsScopes.push_back(F.ParamScopes[Formal]);
+                }
+            }
+
+            void print(Printer *P, int Part, bool Last) const override {
+                SimplePrinter *SP = dynamic_cast<SimplePrinter *>(P);
+                assert(SP);
+
+                if(Part == 0) {
+                    // Let printer know that the next child is function name.
+                    SP->setParentInfo(ParentInfo::StringFuncall);
+                    // Then the printer will emit funcall when meeting
+                    // the child.
+                    return;
+                }
+
+                // Clear after prev part.
+                SP->clearParentInfo();
+
+                // Odds are casts, evens are args.
+                if(Part & 1) {
+                    // Probably, some arg has been emitted before,
+                    // need to close it.
+                    if(Part > 1) {
+                        SP->endCast();
+                        if(Last) {
+                            SP->endCall();
+                            return;
+                        }
+                        SP->endArg();
+                    }
+
+                    // Let printer know that the next child is a cast.
+                    SP->setParentInfo(ParentInfo::StringCast);
+                } else {
+                    // Let the child know it is an expression.
+                    SP->setParentInfo(ParentInfo::Expression);
                 }
             }
         };

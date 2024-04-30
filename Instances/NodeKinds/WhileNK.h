@@ -4,14 +4,17 @@
 #include "DecoderBase/ASTNodeKind.h"
 #include "DecoderBase/Scope.h"
 #include "DecoderBase/Utils.h"
+#include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/ExpressionScope.h"
 #include "Instances/Scopes/StatementScope.h"
 #include <algorithm>
+#include <cassert>
 #include <utility>
 #include <vector>
 
 using namespace decoder;
 using namespace instances::scopes;
+using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
@@ -54,6 +57,39 @@ namespace instances {
                 OperandsScopes.push_back(Condition);
                 OperandsScopes.push_back(Body);
                 if(DoWhile) std::swap(OperandsScopes[0], OperandsScopes[1]);
+            }
+
+            void print(Printer *P, int Part, bool Last) const override {
+                SimplePrinter *SP = dynamic_cast<SimplePrinter *>(P);
+                assert(SP);
+
+                if(DoWhile) {
+                    switch(Part) {
+                    default: throw "Invalid children count";
+                    case 0:
+                        SP->startDoWhile();
+                        break;
+                    case 1:
+                        SP->startDoWhileCondition();
+                        break;
+                    case 2:
+                        SP->endDoWhileCondition();
+                        break;
+                    }
+                } else {
+                    switch(Part) {
+                    default: throw "Invalid children count";
+                    case 0:
+                        SP->startWhile();
+                        break;
+                    case 1:
+                        SP->startWhileBody();
+                        break;
+                    case 2:
+                        SP->endWhileBody();
+                        break;
+                    }
+                }
             }
         };
     }

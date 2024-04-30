@@ -4,12 +4,15 @@
 #include "DecoderBase/ASTNodeKind.h"
 #include "DecoderBase/Scope.h"
 #include "DecoderBase/Utils.h"
+#include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/ExpressionScope.h"
 #include "Instances/Scopes/StatementScope.h"
+#include <cassert>
 #include <vector>
 
 using namespace decoder;
 using namespace instances::scopes;
+using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
@@ -52,6 +55,30 @@ namespace instances {
                 // Then else-branch if exists
                 if(HasElse)
                     OperandsScopes.push_back(StatementScope::getLarge());
+            }
+
+            void print(Printer *P, int Part, bool Last) const override {
+                SimplePrinter *SP = dynamic_cast<SimplePrinter *>(P);
+                assert(SP);
+
+                switch(Part) {
+                default: throw "Invalid children count";
+                case 0:
+                    SP->startIf();
+                    break;
+                case 1:
+                    SP->startIfBody();
+                    break;
+                case 2:
+                    SP->endIfBody();
+                    if(HasElse)
+                        SP->startElse();
+                    break;
+                case 3:
+                    if(!HasElse) throw "Has no else branch";
+                    SP->endElse();
+                    break;
+                }
             }
         };
     }

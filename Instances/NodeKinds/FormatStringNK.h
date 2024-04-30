@@ -3,19 +3,16 @@
 
 #include "DecoderBase/ASTNodeKind.h"
 #include "DecoderBase/Scope.h"
-#include "DecoderBase/Utils.h"
-#include "Instances/NodeKinds/SingleStringNK.h"
-#include "Instances/Scopes/ExpressionScope.h"
+#include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/FormatStringScope.h"
 #include "Instances/Scopes/SingleStringScope.h"
-#include "Instances/Scopes/StatementScope.h"
-#include <algorithm>
-#include <initializer_list>
+#include <cassert>
 #include <string>
 #include <vector>
 
 using namespace decoder;
 using namespace instances::scopes;
+using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
@@ -110,6 +107,22 @@ namespace instances {
 
                 Result.push_back('"');
                 OperandsScopes.push_back(new SingleStringScope(Result));
+            }
+
+            void print(Printer *P, int Part, bool Last) const override {
+                SimplePrinter *SP = dynamic_cast<SimplePrinter *>(P);
+                assert(SP);
+
+                switch(Part) {
+                default: throw "Invalid children count";
+                case 0:
+                    // Let printer know that the next arg is a const.
+                    SP->setParentInfo(ParentInfo::StringConst);
+                    break;
+                case 1:
+                    SP->clearParentInfo();
+                    break;
+                }
             }
         };
     }

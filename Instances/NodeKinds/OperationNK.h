@@ -4,13 +4,16 @@
 #include "DecoderBase/ASTNodeKind.h"
 #include "DecoderBase/Scope.h"
 #include "DecoderBase/Utils.h"
+#include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/ExpressionScope.h"
 #include "Instances/Scopes/StatementScope.h"
 #include <algorithm>
+#include <cassert>
 #include <vector>
 
 using namespace decoder;
 using namespace instances::scopes;
+using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
@@ -34,10 +37,11 @@ namespace instances {
         private:
             const char *Op;
             int AllowFloat : 1;
+            int Suffix : 1; // Does matter only when printing.
             OpKind Kind;
         public: 
-            OperationNK(int Unary, int AllowFloat, OpKind Kind)
-                : AllowFloat(AllowFloat), Kind(Kind) {}
+            OperationNK(int Unary, int AllowFloat, int Suffix, OpKind Kind)
+                : AllowFloat(AllowFloat), Suffix(Suffix), Kind(Kind) {}
 
             bool getInfoFields(const Scope *S, std::vector<int> &Sizes) const
                 override {
@@ -272,6 +276,36 @@ namespace instances {
                 // Return calculated scopes.
                 if(Left) OperandsScopes.push_back(Left);
                 if(Right) OperandsScopes.push_back(Right);
+            }
+
+            void print(Printer *P, int Part, bool Last) const override {
+                SimplePrinter *SP = dynamic_cast<SimplePrinter *>(P);
+                assert(SP);
+
+                if(Kind <= OpKind::LastUnary) {
+                    switch(Part) {
+                    default: throw "Invalid children count";
+                    case 0:
+                        SP->startUnary(Op, Suffix);
+                        break;
+                    case 1:
+                        SP->endUnary(Op, Suffix);
+                        break;
+                    }
+                } else {
+                    switch(Part) {
+                    default: throw "Invalid children count";
+                    case 0:
+                        SP->startBinary(Op);
+                        break;
+                    case 1:
+                        SP->middleBinary(Op);
+                        break;
+                    case 2:
+                        SP->endBinary(Op);
+                        break;
+                    }
+                }
             }
         };
     }

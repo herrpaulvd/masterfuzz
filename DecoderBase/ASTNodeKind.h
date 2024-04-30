@@ -13,7 +13,7 @@ namespace decoder {
         virtual void getOperandsScopes(const Scope *ResultScope,
             const std::vector<int> &Values,
             std::vector<Scope *> &OperandsScopes) const = 0;
-        virtual void print(Printer *P, int Part) const = 0;
+        virtual void print(Printer *P, int Part, bool Last) const = 0;
     };
 }
 

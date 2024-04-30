@@ -18,10 +18,10 @@ namespace decoder {
         void print(Printer *P) const {
             int Count = Children.size();
             for(int I = 0; I < Count; I++) {
-                Kind->print(P, I);
+                Kind->print(P, I, false);
                 Children[I]->print(P);
             }
-            Kind->print(P, Count);
+            Kind->print(P, Count, true);
         }
     };
 }

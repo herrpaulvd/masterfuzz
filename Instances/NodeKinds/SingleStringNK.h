@@ -3,8 +3,12 @@
 
 #include "DecoderBase/ASTNodeKind.h"
 #include "DecoderBase/Scope.h"
+#include "Instances/Printers/SimplePrinter.h"
+#include <cassert>
+#include <string>
 
 using namespace decoder;
+using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
@@ -23,6 +27,12 @@ namespace instances {
             void getOperandsScopes(const Scope *ResultScope,
                 const std::vector<int> &Values,
                 std::vector<Scope *> &OperandsScopes) const {}
+            
+            void print(Printer *P, int Part, bool Last) const override {
+                SimplePrinter *SP = dynamic_cast<SimplePrinter *>(P);
+                assert(SP);
+                SP->emitSingleString(S);
+            }
         };
     }
 }

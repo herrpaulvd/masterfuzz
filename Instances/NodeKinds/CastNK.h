@@ -4,14 +4,17 @@
 #include "DecoderBase/ASTNodeKind.h"
 #include "DecoderBase/Scope.h"
 #include "DecoderBase/Utils.h"
+#include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/ExpressionScope.h"
 #include "Instances/Scopes/SingleStringScope.h"
 #include <algorithm>
+#include <cassert>
 #include <string>
 #include <vector>
 
 using namespace decoder;
 using namespace instances::scopes;
+using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
@@ -90,6 +93,28 @@ namespace instances {
                         1, 1, 1, 
                         1, 1)
                 );
+            }
+
+            void print(Printer *P, int Part, bool Last) const override {
+                SimplePrinter *SP = dynamic_cast<SimplePrinter *>(P);
+                assert(SP);
+
+                switch(Part) {
+                default: throw "Invalid children count";
+                case 0:
+                    // Let printer know that the next arg is a cast.
+                    SP->setParentInfo(ParentInfo::StringCast);
+                    break;
+                case 1:
+                    // Reset info for the next arg child.
+                    SP->clearParentInfo();
+                    SP->setParentInfo(ParentInfo::Expression);
+                    break;
+                case 2:
+                    SP->clearParentInfo();
+                    SP->endCast();
+                    break;
+                }
             }
         };
     }
