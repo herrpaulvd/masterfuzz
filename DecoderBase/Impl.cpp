@@ -47,6 +47,30 @@ bool decoder::less(int Left, int Right, bool &Result) {
     return true;
 }
 
+std::string decoder::makeTypeName(int PtrDepth, int BaseSizeExp, bool Float, bool Signed, bool Const) {
+    std::string TypeName;
+    if(Const) TypeName.append("const ");
+    if(Float) {
+        switch (BaseSizeExp) {
+        default: throw "Unknown float type";
+        case 2: TypeName.append("float"); break;
+        case 3: TypeName.append("double"); break;
+        }
+    } else {
+        if(!Signed) TypeName.append("un");
+        TypeName.append("signed ");
+        switch (BaseSizeExp) {
+        default: throw "Unknown integer type";
+        case 0: TypeName.append("char"); break;
+        case 1: TypeName.append("short"); break;
+        case 2: TypeName.append("int"); break;
+        case 3: TypeName.append("long long"); break;
+        }
+    }
+    while(PtrDepth--) TypeName.push_back('*');
+    return TypeName;
+}
+
 ASTNode *Decoder::GenerateNode(ByteStream *Stream, Scope *CurrentScope) {
     // Get available kinds list.
     CurrentScope = CurrentScope->changeShortness(!Stream->isAlive());

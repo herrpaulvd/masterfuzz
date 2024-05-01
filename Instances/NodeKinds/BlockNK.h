@@ -14,7 +14,7 @@ using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
-        class BlockNK : ASTNodeKind {
+        class BlockNK : public ASTNodeKind {
         private:
             BlockNK() {}
         public:

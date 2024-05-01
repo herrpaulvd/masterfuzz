@@ -2,9 +2,11 @@
 #define IP_SIMPLEPRINTER_H
 
 #include "DecoderBase/Printer.h"
+#include <cassert>
 #include <fstream>
 #include <stack>
 #include <string>
+#include <vector>
 
 using namespace decoder;
 
@@ -17,9 +19,10 @@ namespace instances {
             StringCast, // Next child is a cast.
             StringConst, // Next child is a const.
             StringVariable, // Next child is a variable.
+            StringNew, // Next child is new operator argument.
         };
 
-        class SimplePrinter : Printer {
+        class SimplePrinter : public Printer {
         private:
             std::ofstream out;
             int Tabs = 0;
@@ -211,6 +214,7 @@ namespace instances {
             virtual void startDoWhile() {
                 startLine("do");
                 setParentInfo(ParentInfo::Statement);
+                pusht();
             }
 
             virtual void startDoWhileCondition() {
@@ -237,6 +241,8 @@ namespace instances {
             }
             
             virtual void startUnary(const char *Sign, bool Suffix) {
+                if(getParentInfo() == ParentInfo::Statement)
+                    startLine();
                 if(!Suffix) print(Sign);
                 print('(');
                 setParentInfo(ParentInfo::Expression);
@@ -252,6 +258,8 @@ namespace instances {
             // some emition part, let them be a param to let sofisticated
             // printers build alternative emitions.
             virtual void startBinary(const char *Sign) {
+                if(getParentInfo() == ParentInfo::Statement)
+                    startLine();
                 print('(');
                 setParentInfo(ParentInfo::Expression);
             }
@@ -267,6 +275,36 @@ namespace instances {
                 clearParentInfo();
             }
 
+            virtual void startNew() {
+                print("new ");
+                setParentInfo(ParentInfo::StringNew);
+            }
+
+            virtual void middleNew() {
+                clearParentInfo();
+                // Prevent too big and negative memory allocation.
+                print("[(unsigned char)(");
+                setParentInfo(ParentInfo::Expression);
+            }
+
+            virtual void endNew() {
+                clearParentInfo();
+                print(")]");
+            }
+
+            virtual void startDelete() {
+                startLine("delete ");
+                setParentInfo(ParentInfo::Expression);
+            }
+
+            virtual void endDelete() {
+                print(';');
+            }
+
+            virtual void printConst(const std::string &S) {print(S);}
+            virtual void printVariable(const std::string &S) {print(S);}
+            virtual void printNewArg(const std::string &S) {print(S);}
+
             virtual void emitSingleString(const std::string &S) {
                 switch(getParentInfo()) {
                 default: throw "Invalid string kind";
@@ -277,10 +315,24 @@ namespace instances {
                     startCast(S);
                     break;
                 case ParentInfo::StringConst:
+                    printConst(S);
+                    break;
                 case ParentInfo::StringVariable:
-                    print(S);
+                    printVariable(S);
+                    break;
+                case ParentInfo::StringNew:
+                    printNewArg(S);
+                    break;
+                case ParentInfo::Expression:
+                    assert(S == "stdout"); // Single allowed case.
+                    printVariable(S);
                     break;
                 }
+            }
+
+            virtual void printParts(const std::vector<std::string> &PS) {
+                for(auto &P : PS)
+                    printLine(P);
             }
         };
     }

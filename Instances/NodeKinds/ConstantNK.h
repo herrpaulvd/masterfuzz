@@ -19,8 +19,15 @@ namespace instances {
     namespace nodekinds {
         // Here, ptr consts are not allowed.
         // They will be simulated via so-inited variables.
-        class ConstantNK : ASTNodeKind {
+        class ConstantNK : public ASTNodeKind {
+        private:
+            ConstantNK() {}
         public:
+            static ConstantNK *get() {
+                static ConstantNK Instance;
+                return &Instance;
+            }
+
             bool getInfoFields(const Scope *S, std::vector<int> &Sizes) const
                 override {
                 const ExpressionScope *ES = dynamic_cast<const ExpressionScope *>(S);
@@ -79,7 +86,7 @@ namespace instances {
                     }
                 }
                 
-                OperandsScopes.push_back(new SingleStringScope(S));
+                OperandsScopes.push_back(new SingleStringScope(S, true));
             }
 
             void print(Printer *P, int Part, bool Last) const override {

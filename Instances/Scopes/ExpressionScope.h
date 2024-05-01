@@ -31,26 +31,27 @@ namespace instances {
                 int AllowSigned, int AllowUnsigned, int AllowRvalue,
                 int AllowInt, int AllowFloat,
                 bool Shortness) {
-                static std::map<ES_tuple, ExpressionScope> Cache;
+                static std::map<ES_tuple, ExpressionScope *> Cache;
 
                 ES_tuple Params(PtrDepthMin, PtrDepthMax,
                     BaseSizeExpMin, BaseSizeExpMax,
                     AllowSigned, AllowUnsigned, AllowRvalue,
                     AllowInt, AllowFloat, Shortness);
-                bool Init = Cache.count(Params);
-                ExpressionScope &Result = Cache[Params];
-                if(Init) {
-                    Result.PtrDepthMin = PtrDepthMin;
-                    Result.PtrDepthMax = PtrDepthMax;
-                    Result.BaseSizeExpMin = BaseSizeExpMin;
-                    Result.BaseSizeExpMax = BaseSizeExpMax;
-                    Result.AllowSigned = AllowSigned;
-                    Result.AllowUnsigned = AllowUnsigned;
-                    Result.AllowRvalue = AllowRvalue;
-                    Result.AllowInt = AllowInt;
-                    Result.AllowFloat = AllowFloat;
-                    Result.setShortness(Shortness);
+                ExpressionScope *&Result = Cache[Params];
+                if(!Result) {
+                    Result = new ExpressionScope();
+                    Result->PtrDepthMin = PtrDepthMin;
+                    Result->PtrDepthMax = PtrDepthMax;
+                    Result->BaseSizeExpMin = BaseSizeExpMin;
+                    Result->BaseSizeExpMax = BaseSizeExpMax;
+                    Result->AllowSigned = AllowSigned;
+                    Result->AllowUnsigned = AllowUnsigned;
+                    Result->AllowRvalue = AllowRvalue;
+                    Result->AllowInt = AllowInt;
+                    Result->AllowFloat = AllowFloat;
+                    Result->setShortness(Shortness);
                 }
+                return Result;
             }
         public:
             static ExpressionScope *get(int PtrDepthMin, int PtrDepthMax,

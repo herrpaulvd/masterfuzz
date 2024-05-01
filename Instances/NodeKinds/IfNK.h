@@ -16,7 +16,7 @@ using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
-        class IfNK : ASTNodeKind {
+        class IfNK : public ASTNodeKind {
         private:
             bool HasElse;
             // For smaller bit amount needed, it's better to create

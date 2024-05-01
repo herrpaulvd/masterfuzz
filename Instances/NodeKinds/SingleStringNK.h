@@ -12,7 +12,7 @@ using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
-        class SingleStringNK : ASTNodeKind {
+        class SingleStringNK : public ASTNodeKind {
         private:
             std::string S;
         public:
@@ -20,13 +20,13 @@ namespace instances {
 
             const std::string &getString() const {return S;}
 
-            bool getInfoFields(const Scope *S, std::vector<int> &Sizes) const {
+            bool getInfoFields(const Scope *S, std::vector<int> &Sizes) const override {
                 return true;
             }
 
             void getOperandsScopes(const Scope *ResultScope,
                 const std::vector<int> &Values,
-                std::vector<Scope *> &OperandsScopes) const {}
+                std::vector<Scope *> &OperandsScopes) const override {}
             
             void print(Printer *P, int Part, bool Last) const override {
                 SimplePrinter *SP = dynamic_cast<SimplePrinter *>(P);

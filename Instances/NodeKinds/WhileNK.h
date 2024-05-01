@@ -18,7 +18,7 @@ using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
-        class WhileNK : ASTNodeKind {
+        class WhileNK : public ASTNodeKind {
         private:
             bool DoWhile;
             // For smaller bit amount needed, it's better to create

@@ -11,6 +11,8 @@ namespace decoder {
         std::vector<int> SelectedKinds;
         std::vector<std::vector<int>> InfoFields;
         ASTNodeKind *Single;
+
+        ScopeCache() : SelectedKinds(), InfoFields(), Single() {}
     };
 
     class Scope {
@@ -37,6 +39,8 @@ namespace decoder {
             this->Cache = Cache;
             HasCache = true;
         }
+
+        void clearCache() {HasCache = false;}
     };
 }
 

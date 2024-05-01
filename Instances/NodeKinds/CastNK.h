@@ -9,7 +9,6 @@
 #include "Instances/Scopes/SingleStringScope.h"
 #include <algorithm>
 #include <cassert>
-#include <string>
 #include <vector>
 
 using namespace decoder;
@@ -18,7 +17,7 @@ using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
-        class CastNK : ASTNodeKind {
+        class CastNK : public ASTNodeKind {
         private:
             CastNK() {}
         public:
@@ -66,26 +65,7 @@ namespace instances {
                 int ResBaseSizeExp = selectInRange(BaseSizeExpMin, BaseSizeExpMax, MaxBaseSizeExp, Values[1]);
                 bool ResSigned = selectBool(AllowSigned, AllowUnsigned, Values[3]);
 
-                std::string TypeName;
-                if(ResFloat) {
-                    switch (ResBaseSizeExp) {
-                    default: throw "Unknown float type";
-                    case 2: TypeName.append("float"); break;
-                    case 3: TypeName.append("double"); break;
-                    }
-                } else {
-                    if(!ResSigned) TypeName.append("un");
-                    TypeName.append("signed ");
-                    switch (ResBaseSizeExp) {
-                    default: throw "Unknown integer type";
-                    case 0: TypeName.append("char"); break;
-                    case 1: TypeName.append("short"); break;
-                    case 2: TypeName.append("int"); break;
-                    case 3: TypeName.append("long long"); break;
-                    }
-                }
-                while(ResPtrDepth--) TypeName.push_back('*');
-                OperandsScopes.push_back(new SingleStringScope(TypeName));
+                OperandsScopes.push_back(new SingleStringScope(makeTypeName(ResPtrDepth, ResBaseSizeExp, ResFloat, ResSigned, false), true));
                 OperandsScopes.push_back(
                     ExpressionScope::get(
                         0, MaxPtrDepth, 

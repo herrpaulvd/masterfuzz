@@ -20,17 +20,19 @@ namespace instances {
         struct Variable {
             int PtrDepth, BaseSizeExp;
             int Signed : 1;
-            int Const : 1;
+            int ReadOnly : 1;
             int Float : 1;
             Scope *S;
 
             Variable() {}
-            Variable(const std::string &Name, int PtrDepth, int BaseSizeExp, int Signed, int Float)
+            Variable(const std::string &Name, int PtrDepth, int BaseSizeExp,
+                int Signed, int Float, int ReadOnly)
                 : PtrDepth(PtrDepth), BaseSizeExp(BaseSizeExp),
-                Signed(Signed), Float(Float), S(new SingleStringScope(Name)) {}
+                Signed(Signed), ReadOnly(ReadOnly), Float(Float),
+                S(new SingleStringScope(Name, true)) {}
         };
         
-        class VariableNK : ASTNodeKind {
+        class VariableNK : public ASTNodeKind {
         private:
             std::vector<Variable> Variables;
             int ParamWidth;
@@ -44,7 +46,7 @@ namespace instances {
                 for(int I = 0; I < Variables.size(); I++) {
                     const Variable &V = Variables[I];
                     if(
-                        (!V.Const || ES->getAllowRvalue())
+                        (!V.ReadOnly || ES->getAllowRvalue())
 
                         && ES->getPtrDepthMin() <= V.PtrDepth
                         && V.PtrDepth <= ES->getPtrDepthMax()
@@ -62,7 +64,7 @@ namespace instances {
             }
 
         public:
-            VariableNK(std::initializer_list<Variable> Variables)
+            VariableNK(const std::vector<Variable> &Variables)
                 : Variables(Variables) {}
             VariableNK(Variable V) : Variables() {
                 Variables.push_back(V);

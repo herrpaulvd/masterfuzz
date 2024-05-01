@@ -1,11 +1,12 @@
-#ifndef INK_INDEXNK_H
-#define INK_INDEXNK_H
+#ifndef INK_NEWNK_H
+#define INK_NEWNK_H
 
 #include "DecoderBase/ASTNodeKind.h"
 #include "DecoderBase/Scope.h"
 #include "DecoderBase/Utils.h"
 #include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/ExpressionScope.h"
+#include "Instances/Scopes/SingleStringScope.h"
 #include <algorithm>
 #include <cassert>
 #include <vector>
@@ -16,12 +17,12 @@ using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
-        class IndexNK : public ASTNodeKind {
+        class NewNK : public ASTNodeKind {
         private:
-            IndexNK() {}
+            NewNK() {}
         public:
-            static IndexNK *get() {
-                static IndexNK Instance;
+            static NewNK *get() {
+                static NewNK Instance;
                 return &Instance;
             }
 
@@ -29,21 +30,16 @@ namespace instances {
                 override {
                 const ExpressionScope *ES = dynamic_cast<const ExpressionScope *>(S);
                 // Shortness is not allowed for complex nodes.
-                if(!ES || ES->isShort()) return false;
-
-                // Cannot return max high-depth ptr,
-                // because indexable will exceed the limit.
-                if(ES->getPtrDepthMin() == MaxPtrDepth)
+                // Lvalue is not allowed.
+                // It returns ptr.
+                if(!ES || ES->isShort() || !ES->getAllowRvalue() || ES->getPtrDepthMax() == 0)
                     return false;
-                // Any base size exp is allowed in any cases.
-                // Any signess too.
-                
+
                 // Get all fields from the input.
                 Sizes.push_back(getSizeForRange(0, MaxPtrDepth));
                 Sizes.push_back(getSizeForRange(0, MaxBaseSizeExp));
                 Sizes.push_back(1); // Float/Int
                 Sizes.push_back(1); // Signed/Unsigned
-                // L/R value does not matter.
                 return true;
             }
 
@@ -63,28 +59,15 @@ namespace instances {
                 int AllowUnsigned = ES->getAllowUnsigned();
                 // L/R value does not matter.
 
-                if(PtrDepthMax == MaxPtrDepth) PtrDepthMax--;
-
                 // Get the actual result properties.
                 int ResPtrDepth = selectInRange(PtrDepthMin, PtrDepthMax, MaxPtrDepth, Values[0]);
                 bool ResFloat = selectBool(AllowFloat, AllowInt, Values[2]);
                 if(ResFloat) BaseSizeExpMin = std::max(BaseSizeExpMin, 2);
                 int ResBaseSizeExp = selectInRange(BaseSizeExpMin, BaseSizeExpMax, MaxBaseSizeExp, Values[1]);
                 bool ResSigned = selectBool(AllowSigned, AllowUnsigned, Values[3]);
-                AllowSigned = ResSigned ? 1 : 0;
-                AllowUnsigned = 1 - AllowSigned;
-                AllowFloat = ResFloat ? 1 : 0;
-                AllowInt = 1 - AllowFloat;
 
-                // Left scope is same as result scope except for PtrDepth++.
-                OperandsScopes.push_back(
-                    ExpressionScope::get(
-                        ResPtrDepth + 1, ResPtrDepth + 1, 
-                        ResBaseSizeExp, ResBaseSizeExp, 
-                        AllowSigned, AllowUnsigned, 1, 
-                        AllowInt, AllowFloat)
-                );
-                // Right scope is any integer.
+                OperandsScopes.push_back(new SingleStringScope(makeTypeName(ResPtrDepth, ResBaseSizeExp, ResFloat, ResSigned, false), true));
+                // Any integer.
                 OperandsScopes.push_back(
                     ExpressionScope::get(
                         0, 0, 
@@ -101,13 +84,17 @@ namespace instances {
                 switch(Part) {
                 default: throw "Invalid children count";
                 case 0:
-                    SP->startArray();
+                    // Let printer know that the next arg is a cast.
+                    SP->setParentInfo(ParentInfo::StringCast);
                     break;
                 case 1:
-                    SP->startIndex();
+                    // Reset info for the next arg child.
+                    SP->clearParentInfo();
+                    SP->setParentInfo(ParentInfo::Expression);
                     break;
                 case 2:
-                    SP->endIndex();
+                    SP->clearParentInfo();
+                    SP->endCast();
                     break;
                 }
             }

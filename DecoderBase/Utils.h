@@ -1,6 +1,7 @@
 #ifndef DECODERBASE_UTILS_H
 #define DECODERBASE_UTILS_H
 
+#include <string>
 #include <vector>
 namespace decoder {
     const int ByteSize = 8;
@@ -16,6 +17,8 @@ namespace decoder {
     bool selectBool(int AllowTrue, int AllowFalse, int Seed);
     int getByteSize(int BitSize);
     bool less(int Left, int Right, bool &Result);
+
+    std::string makeTypeName(int PtrDepth, int BaseSizeExp, bool Float, bool Signed, bool Const);
 }
 
 #endif

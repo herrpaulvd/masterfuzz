@@ -1,5 +1,5 @@
-#ifndef INK_FORNK_H
-#define INK_FORNK_H
+#ifndef INK_DELETENK_H
+#define INK_DELETENK_H
 
 #include "DecoderBase/ASTNodeKind.h"
 #include "DecoderBase/Scope.h"
@@ -7,7 +7,9 @@
 #include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/ExpressionScope.h"
 #include "Instances/Scopes/StatementScope.h"
+#include <algorithm>
 #include <cassert>
+#include <utility>
 #include <vector>
 
 using namespace decoder;
@@ -16,38 +18,34 @@ using namespace instances::printers;
 
 namespace instances {
     namespace nodekinds {
-        class ForNK : public ASTNodeKind {
+        class DeleteNK : public ASTNodeKind {
         private:
-            ForNK() {}
+            DeleteNK() {}
         public:
-            static ForNK *get() {
-                static ForNK Instance;
+            static DeleteNK *get() {
+                static DeleteNK Instance;
                 return &Instance;
             }
 
             bool getInfoFields(const Scope *S, std::vector<int> &Sizes) const
                 override {
+                // No fields needed.
                 return !S->isShort() && dynamic_cast<const StatementScope *>(S);
             }
 
             void getOperandsScopes(const Scope *ResultScope,
                 const std::vector<int> &Values,
                 std::vector<Scope *> &OperandsScopes) const override {
-                // Children scopes are fixed.
 
-                static Scope *Condition = ExpressionScope::get(
-                    0, MaxPtrDepth,
-                    0, MaxBaseSizeExp,
-                    1, 1, 1,
-                    1, 1
+                // Single operand - any lvalue ptr.
+                OperandsScopes.push_back(
+                    ExpressionScope::get(
+                        1, MaxPtrDepth,
+                        0, MaxBaseSizeExp,
+                        1, 1, 0,
+                        1, 1
+                    )
                 );
-
-                static Scope *Body = StatementScope::getLarge();
-
-                OperandsScopes.push_back(Condition); //x;;
-                OperandsScopes.push_back(Condition); //;x;
-                OperandsScopes.push_back(Condition); // ;;x
-                OperandsScopes.push_back(Body);
             }
 
             void print(Printer *P, int Part, bool Last) const override {
@@ -57,17 +55,10 @@ namespace instances {
                 switch(Part) {
                 default: throw "Invalid children count";
                 case 0:
-                    SP->startForLoop();
+                    SP->startDelete();
                     break;
                 case 1:
-                case 2:
-                    SP->endForExpressionPart();
-                    break;
-                case 3:
-                    SP->startForBody();
-                    break;
-                case 4:
-                    SP->endForBody();
+                    SP->endDelete();
                     break;
                 }
             }

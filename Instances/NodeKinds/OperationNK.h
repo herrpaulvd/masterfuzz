@@ -31,17 +31,17 @@ namespace instances {
             ComparisonBinary = PtrBinary + 1, // == != < > <= >=
             LogicalBinary = ComparisonBinary + 1, // && ||
             AssignmentBinary = LogicalBinary + 1, // =
-        }; 
+        };
 
-        class OperationNK : ASTNodeKind {
+        class OperationNK : public ASTNodeKind {
         private:
             const char *Op;
             int AllowFloat : 1;
             int Suffix : 1; // Does matter only when printing.
             OpKind Kind;
         public: 
-            OperationNK(int Unary, int AllowFloat, int Suffix, OpKind Kind)
-                : AllowFloat(AllowFloat), Suffix(Suffix), Kind(Kind) {}
+            OperationNK(const char *Op, int AllowFloat, int Suffix, OpKind Kind)
+                : Op(Op), AllowFloat(AllowFloat), Suffix(Suffix), Kind(Kind) {}
 
             bool getInfoFields(const Scope *S, std::vector<int> &Sizes) const
                 override {
@@ -75,7 +75,7 @@ namespace instances {
                     // Which kinds cannot return lvalue.
                     if(!ES->getAllowRvalue() && Kind != OpKind::DereferenceUnary)
                         return false;
-                    // Does the op support float?
+                    // Can the op return float?
                     if(!ES->getAllowInt() && !AllowFloat) return false;
                 } else if(const StatementScope * SS = dynamic_cast<const StatementScope *>(S)) {
                     // StatementScope functions as max-wide ExpressionScope.

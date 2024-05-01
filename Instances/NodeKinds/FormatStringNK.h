@@ -23,10 +23,16 @@ namespace instances {
             Float = 3,
         };
 
-        class FormatStringNK : ASTNodeKind {
+        class FormatStringNK : public ASTNodeKind {
         private:
             const int EntriesCount = 4;
+            FormatStringNK() {}
         public:
+            static FormatStringNK *get() {
+                static FormatStringNK Instance;
+                return &Instance;
+            }
+
             bool getInfoFields(const Scope *S, std::vector<int> &Sizes) const
                 override {
                 const FormatStringScope *FSS = dynamic_cast<const FormatStringScope *>(S);
@@ -99,14 +105,14 @@ namespace instances {
                         case FmtModifier::Float:
                             if(Long)
                                 Result.push_back('L');
-                            Result.push_back('d');
+                            Result.push_back('f');
                             break;
                         }
                     }
                 }
 
                 Result.push_back('"');
-                OperandsScopes.push_back(new SingleStringScope(Result));
+                OperandsScopes.push_back(new SingleStringScope(Result, true));
             }
 
             void print(Printer *P, int Part, bool Last) const override {

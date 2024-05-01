@@ -40,10 +40,10 @@ namespace instances {
             bool HasVarArgs;
 
             Function(const char *Name, std::initializer_list<ParamType> Params) {
-                NameScope = new SingleStringScope(Name);
+                NameScope = new SingleStringScope(Name, true);
                 
-                static SingleStringScope *NotNeeded = new SingleStringScope("");
-                static SingleStringScope *PWCharCast = new SingleStringScope("wchar_t*");
+                static SingleStringScope *NotNeeded = new SingleStringScope("", false);
+                static SingleStringScope *PWCharCast = new SingleStringScope("wchar_t*", false);
 
                 static Scope *IntScope = ExpressionScope::get(
                     0, 0,
@@ -72,7 +72,7 @@ namespace instances {
                 );
                 // PWChar scope is actually PVoid scope with cast.
                 // File scope is stdout only.
-                static Scope *FileScope = new SingleStringScope("stdout");
+                static Scope *FileScope = new SingleStringScope("stdout", false);
                 static Scope *FormatScope = FormatStringScope::get(false);
                 static Scope *WFormatScope = FormatStringScope::get(true);
                 static Scope *VarargsScope = ExpressionScope::get(
@@ -128,11 +128,11 @@ namespace instances {
             }
         };
 
-        class CallNK : ASTNodeKind {
+        class CallNK : public ASTNodeKind {
         private:
             std::vector<Function> Functions;
         public:
-            CallNK(std::initializer_list<Function> Functions) : Functions(Functions) {}
+            CallNK(std::vector<Function> Functions) : Functions(Functions) {}
 
             bool getInfoFields(const Scope *S, std::vector<int> &Sizes) const
                 override {
