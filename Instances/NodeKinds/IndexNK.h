@@ -55,12 +55,12 @@ namespace instances {
                 // Get result properties.
                 int PtrDepthMin = ES->getPtrDepthMin();
                 int PtrDepthMax = ES->getPtrDepthMax();
-                int BaseSizeExpMin = ES->getPtrDepthMin();
-                int BaseSizeExpMax = ES->getPtrDepthMax();
-                int AllowInt = ES->getAllowInt();
-                int AllowFloat = ES->getAllowFloat();
-                int AllowSigned = ES->getAllowSigned();
-                int AllowUnsigned = ES->getAllowUnsigned();
+                int BaseSizeExpMin = ES->getBaseSizeExpMin();
+                int BaseSizeExpMax = ES->getBaseSizeExpMax();
+                bool AllowInt = ES->getAllowInt();
+                bool AllowFloat = ES->getAllowFloat();
+                bool AllowSigned = ES->getAllowSigned();
+                bool AllowUnsigned = ES->getAllowUnsigned();
                 // L/R value does not matter.
 
                 if(PtrDepthMax == MaxPtrDepth) PtrDepthMax--;

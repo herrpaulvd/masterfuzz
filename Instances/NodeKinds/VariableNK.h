@@ -19,17 +19,17 @@ namespace instances {
     namespace nodekinds {
         struct Variable {
             int PtrDepth, BaseSizeExp;
-            int Signed : 1;
-            int ReadOnly : 1;
-            int Float : 1;
+            bool Signed : 1;
+            bool ReadOnly : 1;
+            bool Float : 1;
             Scope *S;
 
             Variable() {}
             Variable(const std::string &Name, int PtrDepth, int BaseSizeExp,
-                int Signed, int Float, int ReadOnly)
+                bool Signed, bool Float, bool ReadOnly)
                 : PtrDepth(PtrDepth), BaseSizeExp(BaseSizeExp),
                 Signed(Signed), ReadOnly(ReadOnly), Float(Float),
-                S(new SingleStringScope(Name, true)) {}
+                S(new SingleStringScope(Name, false)) {}
         };
         
         class VariableNK : public ASTNodeKind {

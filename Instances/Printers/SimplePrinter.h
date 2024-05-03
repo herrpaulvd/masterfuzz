@@ -4,6 +4,7 @@
 #include "DecoderBase/Printer.h"
 #include <cassert>
 #include <fstream>
+#include <iostream>
 #include <stack>
 #include <string>
 #include <vector>
@@ -31,7 +32,15 @@ namespace instances {
         protected:
             void anchor() override {}
 
+            void endLine() {
+                if(!LineEnd) {
+                    out << '\n';
+                    LineEnd = true;
+                }
+            }
+
             void startLine() {
+                endLine();
                 int CurrSpaces = Tabs << 1; // Convert tabs to spaces pairs.
                 while(CurrSpaces--) out << ' ';
                 LineEnd = false;
@@ -42,13 +51,6 @@ namespace instances {
                     startLine();
                 else
                     out << ' ';
-            }
-
-            void endLine() {
-                if(!LineEnd) {
-                    out << '\n';
-                    LineEnd = true;
-                }
             }
 
             template<typename T> void print(T value) {
@@ -97,6 +99,14 @@ namespace instances {
         public:
             SimplePrinter(const std::string &Filename)
                 : out(Filename) {out.tie(0);} // Speed up out.
+
+            void close() {
+                out.close();
+            }
+
+            ~SimplePrinter() {
+                close();
+            }
 
             // For nice looking code, need to count tabs.
             void pusht() {Tabs++;}
@@ -193,6 +203,7 @@ namespace instances {
             virtual void startElse() {
                 startLine("else");
                 setParentInfo(ParentInfo::Statement);
+                pusht();
             }
 
             virtual void endElse() {
@@ -252,6 +263,8 @@ namespace instances {
                 print(')');
                 if(Suffix) print(Sign);
                 clearParentInfo();
+                if(getParentInfo() == ParentInfo::Statement)
+                    print(';');
             }
 
             // Even if operation sign is sometimes not needed to implement
@@ -273,6 +286,8 @@ namespace instances {
             virtual void endBinary(const char *Sign) {
                 print(')');
                 clearParentInfo();
+                if(getParentInfo() == ParentInfo::Statement)
+                    print(';');
             }
 
             virtual void startNew() {

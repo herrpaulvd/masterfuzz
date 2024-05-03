@@ -14,7 +14,7 @@ namespace decoder {
     int getSizeForRange(int Min, int Max);
     int selectInRange(int Min, int Max, int AbsMax, int Seed);
     int selectInSet(const std::vector<int> &Set, int AbsMax, int Seed);
-    bool selectBool(int AllowTrue, int AllowFalse, int Seed);
+    bool selectBool(bool AllowTrue, bool AllowFalse, int Seed);
     int getByteSize(int BitSize);
     bool less(int Left, int Right, bool &Result);
 

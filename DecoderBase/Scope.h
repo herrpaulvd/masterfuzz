@@ -1,6 +1,7 @@
 #ifndef DECODERBASE_SCOPE_H
 #define DECODERBASE_SCOPE_H
 
+#include <iostream>
 #include <utility>
 #include <vector>
 
@@ -41,6 +42,10 @@ namespace decoder {
         }
 
         void clearCache() {HasCache = false;}
+
+        virtual void printDebugInfo() const {
+            std::cout << "No Debug Info" << std::endl;
+        }
     };
 }
 

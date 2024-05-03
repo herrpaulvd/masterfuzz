@@ -1,6 +1,5 @@
 #include "DecoderBase/ASTNodeKind.h"
 #include "DecoderBase/Decoder.h"
-#include "DecoderBase/Printer.h"
 #include "Instances/ByteStreams/RandomByteStream.h"
 #include "Instances/NodeKinds/BlockNK.h"
 #include "Instances/NodeKinds/CallNK.h"
@@ -14,16 +13,15 @@
 #include "Instances/NodeKinds/NewNK.h"
 #include "Instances/NodeKinds/OperationNK.h"
 #include "Instances/NodeKinds/ProgramNK.h"
+#include "Instances/NodeKinds/StubNK.h"
 #include "Instances/NodeKinds/VariableNK.h"
 #include "Instances/NodeKinds/WhileNK.h"
 #include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/GlobalScope.h"
 #include "Instances/Scopes/SingleStringScope.h"
-#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <random>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -47,7 +45,8 @@ Decoder buildDecoder() {
         "  int *ip[10];",
         "  int x = 1;",
         "  int y = 0;",
-        "  float z = 0.5;"
+        "  float z = 0.5;",
+        "  int *** ippp = 0;"
     };
     static std::vector<std::string> Footer = {
         "  printf(\"%lld %d %d %d %d %f\", ipp, ip[0], ip[9], x, y, z);",
@@ -62,6 +61,7 @@ Decoder buildDecoder() {
         {"x", 0, 2, 1, 0, 0},
         {"y", 0, 2, 1, 0, 0},
         {"z", 0, 2, 1, 1, 0},
+        {"ippp", 3, 2, 1, 0, 0},
     };
 
     static std::vector<Function> Functions = {
@@ -129,7 +129,7 @@ Decoder buildDecoder() {
     };
 
     // Build new decoder every time because after use it becomes invalid.
-    return Decoder(GlobalScope::getLarge(), NodeKinds);
+    return Decoder(GlobalScope::getLarge(), NodeKinds, StubNK::get());
 }
 
 void printFile(const char *Filename) {
@@ -137,6 +137,7 @@ void printFile(const char *Filename) {
     std::string line;
     while(std::getline(in, line))
         std::cout << line << std::endl;
+    in.close();
 }
 
 const int StartSeed = 0;
@@ -144,15 +145,20 @@ const char *Source = "input.cpp";
 const char *Binary = "prg";
 const char *Command = "g++ input.cpp -o prg";
 
+// Maybe there's some shortness bug, not sure.
+// Or issues with probability.
+// 1) try to fuzz just so
+// 2) change probabilities
+// 3) check for every seed, what is the first value.
 int main(int argc, char** argv){
     for(int Seed = StartSeed; ; Seed++) {
+        std::cout << "TEST #" << Seed << std::endl << std::endl << std::endl;
         instances::bytestreams::RandomByteStream BS(Seed);
         Decoder D = buildDecoder();
         ASTNode *Tree = D.GenerateAST(&BS);
         SimplePrinter P(Source);
         Tree->print(&P);
-        printFile(Source);
-        static std::string Stumb;
-        std::getline(std::cin, Stumb);
+        P.close();
+        //printFile(Source);
     }
 }

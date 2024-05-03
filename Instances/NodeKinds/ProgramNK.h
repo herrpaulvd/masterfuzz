@@ -44,8 +44,8 @@ namespace instances {
                     SP->pusht();
                     SP->setParentInfo(ParentInfo::Statement);
                 } else {
-                    SP->printParts(Footer);
                     SP->popt();
+                    SP->printParts(Footer);
                     SP->clearParentInfo();
                 }
             }

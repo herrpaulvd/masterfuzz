@@ -40,7 +40,7 @@ namespace instances {
             bool HasVarArgs;
 
             Function(const char *Name, std::initializer_list<ParamType> Params) {
-                NameScope = new SingleStringScope(Name, true);
+                NameScope = new SingleStringScope(Name, false);
                 
                 static SingleStringScope *NotNeeded = new SingleStringScope("", false);
                 static SingleStringScope *PWCharCast = new SingleStringScope("wchar_t*", false);
@@ -83,7 +83,7 @@ namespace instances {
                 );
 
                 for(ParamType T : Params) {
-                    Scope *Cast;
+                    SingleStringScope *Cast;
                     Scope *Param;
                     switch(T) {
                     default: throw "Unknown param type";
@@ -124,6 +124,8 @@ namespace instances {
                         Param = VarargsScope;
                         break;
                     }
+                    CastScopes.push_back(Cast);
+                    ParamScopes.push_back(Param);
                 }
             }
         };

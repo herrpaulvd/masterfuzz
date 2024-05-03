@@ -12,10 +12,11 @@ namespace decoder {
     private:
         Scope *Initial;
         std::vector<ASTNodeKind *> AllKinds;
+        ASTNodeKind *Stub;
         ASTNode *GenerateNode(ByteStream *Stream, Scope *CurrentScope);
     public:
-        Decoder(Scope *Initial, const std::vector<ASTNodeKind *> &AllKinds)
-            : Initial(Initial), AllKinds(AllKinds) {}
+        Decoder(Scope *Initial, const std::vector<ASTNodeKind *> &AllKinds, ASTNodeKind *Stub)
+            : Initial(Initial), AllKinds(AllKinds), Stub(Stub) {}
 
         ASTNode *GenerateAST(ByteStream *Stream) {
             return GenerateNode(Stream, Initial);

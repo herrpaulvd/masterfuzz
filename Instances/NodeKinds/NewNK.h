@@ -49,14 +49,14 @@ namespace instances {
                 const ExpressionScope *ES = static_cast<const ExpressionScope *>(ResultScope);
 
                 // Get result properties.
-                int PtrDepthMin = ES->getPtrDepthMin();
+                int PtrDepthMin = std::max(ES->getPtrDepthMin(), 1);
                 int PtrDepthMax = ES->getPtrDepthMax();
-                int BaseSizeExpMin = ES->getPtrDepthMin();
-                int BaseSizeExpMax = ES->getPtrDepthMax();
-                int AllowInt = ES->getAllowInt();
-                int AllowFloat = ES->getAllowFloat();
-                int AllowSigned = ES->getAllowSigned();
-                int AllowUnsigned = ES->getAllowUnsigned();
+                int BaseSizeExpMin = ES->getBaseSizeExpMin();
+                int BaseSizeExpMax = ES->getBaseSizeExpMax();
+                bool AllowInt = ES->getAllowInt();
+                bool AllowFloat = ES->getAllowFloat();
+                bool AllowSigned = ES->getAllowSigned();
+                bool AllowUnsigned = ES->getAllowUnsigned();
                 // L/R value does not matter.
 
                 // Get the actual result properties.
@@ -66,7 +66,7 @@ namespace instances {
                 int ResBaseSizeExp = selectInRange(BaseSizeExpMin, BaseSizeExpMax, MaxBaseSizeExp, Values[1]);
                 bool ResSigned = selectBool(AllowSigned, AllowUnsigned, Values[3]);
 
-                OperandsScopes.push_back(new SingleStringScope(makeTypeName(ResPtrDepth, ResBaseSizeExp, ResFloat, ResSigned, false), true));
+                OperandsScopes.push_back(new SingleStringScope(makeTypeName(ResPtrDepth - 1, ResBaseSizeExp, ResFloat, ResSigned, false), true));
                 // Any integer.
                 OperandsScopes.push_back(
                     ExpressionScope::get(

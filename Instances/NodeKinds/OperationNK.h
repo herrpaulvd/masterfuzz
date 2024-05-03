@@ -36,11 +36,11 @@ namespace instances {
         class OperationNK : public ASTNodeKind {
         private:
             const char *Op;
-            int AllowFloat : 1;
-            int Suffix : 1; // Does matter only when printing.
+            bool AllowFloat : 1;
+            bool Suffix : 1; // Does matter only when printing.
             OpKind Kind;
         public: 
-            OperationNK(const char *Op, int AllowFloat, int Suffix, OpKind Kind)
+            OperationNK(const char *Op, bool AllowFloat, bool Suffix, OpKind Kind)
                 : Op(Op), AllowFloat(AllowFloat), Suffix(Suffix), Kind(Kind) {}
 
             bool getInfoFields(const Scope *S, std::vector<int> &Sizes) const
@@ -106,13 +106,13 @@ namespace instances {
                 // Get result properties. For SS, they are extremal.
                 int PtrDepthMin = ES ? ES->getPtrDepthMin() : 0;
                 int PtrDepthMax = ES ? ES->getPtrDepthMax() : MaxPtrDepth;
-                int BaseSizeExpMin = ES ? ES->getPtrDepthMin() : 0;
-                int BaseSizeExpMax = ES ? ES->getPtrDepthMax() : MaxBaseSizeExp;
-                int AllowInt = ES ? ES->getAllowInt() : 1;
-                int AllowFloat = ES ? ES->getAllowFloat() : 1;
-                int AllowSigned = ES ? ES->getAllowSigned() : 1;
-                int AllowUnsigned = ES ? ES->getAllowUnsigned() : 1;
-                int AllowRvalue = ES ? ES->getAllowRvalue() : 1;
+                int BaseSizeExpMin = ES ? ES->getBaseSizeExpMin() : 0;
+                int BaseSizeExpMax = ES ? ES->getBaseSizeExpMax() : MaxBaseSizeExp;
+                bool AllowInt = !ES || ES->getAllowInt();
+                bool AllowFloat = !ES || ES->getAllowFloat();
+                bool AllowSigned = !ES || ES->getAllowSigned();
+                bool AllowUnsigned = !ES || ES->getAllowUnsigned();
+                bool AllowRvalue = !ES || ES->getAllowRvalue();
 
                 // Correct them according to the kind and other options.
                 // Disallow float if the op disallows it itself.
@@ -138,7 +138,7 @@ namespace instances {
                     break;
                 }
                 // Which kinds can return lvalue.
-                int AllowLvalue = Kind == OpKind::DereferenceUnary ? 1 : 0;
+                bool AllowLvalue = Kind == OpKind::DereferenceUnary;
 
                 // Get the actual result properties.
                 int ResPtrDepth = selectInRange(PtrDepthMin, PtrDepthMax, MaxPtrDepth, Values[0]);

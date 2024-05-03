@@ -18,18 +18,18 @@ namespace instances {
             // E.g. BaseSize = 1 BYTE => BaseSizeExp = 0;
             // 2 => 1, 4 => 2, 8 => 3.
             int BaseSizeExpMin, BaseSizeExpMax;
-            int AllowSigned : 1;
-            int AllowUnsigned : 1;
-            int AllowRvalue : 1;
-            int AllowInt : 1;
-            int AllowFloat : 1;
+            bool AllowSigned : 1;
+            bool AllowUnsigned : 1;
+            bool AllowRvalue : 1;
+            bool AllowInt : 1;
+            bool AllowFloat : 1;
 
             ExpressionScope() {}
             
             static ExpressionScope *get(int PtrDepthMin, int PtrDepthMax,
                 int BaseSizeExpMin, int BaseSizeExpMax,
-                int AllowSigned, int AllowUnsigned, int AllowRvalue,
-                int AllowInt, int AllowFloat,
+                bool AllowSigned, bool AllowUnsigned, bool AllowRvalue,
+                bool AllowInt, bool AllowFloat,
                 bool Shortness) {
                 static std::map<ES_tuple, ExpressionScope *> Cache;
 
@@ -56,29 +56,37 @@ namespace instances {
         public:
             static ExpressionScope *get(int PtrDepthMin, int PtrDepthMax,
                 int BaseSizeExpMin, int BaseSizeExpMax,
-                int AllowSigned, int AllowUnsigned, int AllowRvalue,
-                int AllowInt, int AllowFloat) {
+                bool AllowSigned, bool AllowUnsigned, bool AllowRvalue,
+                bool AllowInt, bool AllowFloat) {
                 return get(PtrDepthMin, PtrDepthMax,
                     BaseSizeExpMin, BaseSizeExpMax,
                     AllowSigned, AllowUnsigned, AllowRvalue,
-                    AllowInt, AllowFloat, true);
+                    AllowInt, AllowFloat, false);
             }
 
             int getPtrDepthMin() const {return PtrDepthMin;}
             int getPtrDepthMax() const {return PtrDepthMax;}
             int getBaseSizeExpMin() const {return BaseSizeExpMin;}
             int getBaseSizeExpMax() const {return BaseSizeExpMax;}
-            int getAllowSigned() const {return AllowSigned;}
-            int getAllowUnsigned() const {return AllowUnsigned;}
-            int getAllowRvalue() const {return AllowRvalue;}
-            int getAllowInt() const {return AllowInt;}
-            int getAllowFloat() const {return AllowFloat;}
+            bool getAllowSigned() const {return AllowSigned;}
+            bool getAllowUnsigned() const {return AllowUnsigned;}
+            bool getAllowRvalue() const {return AllowRvalue;}
+            bool getAllowInt() const {return AllowInt;}
+            bool getAllowFloat() const {return AllowFloat;}
 
             Scope *changeShortness(bool value) override {
                 return get(PtrDepthMin, PtrDepthMax,
                     BaseSizeExpMin, BaseSizeExpMax,
                     AllowSigned, AllowUnsigned, AllowRvalue,
                     AllowInt, AllowFloat, value);
+            }
+
+            void printDebugInfo() const override {
+                std::cout << "ES " << getPtrDepthMin() << ' ' << getPtrDepthMax() << std::endl;
+                std::cout << getBaseSizeExpMin() << ' ' << getBaseSizeExpMax() << std::endl;
+                std::cout << getAllowSigned() << ' ' << getAllowUnsigned() << std::endl;
+                std::cout << getAllowRvalue() << std::endl;
+                std::cout << getAllowInt() << ' ' << getAllowFloat() << std::endl;
             }
         };
     }

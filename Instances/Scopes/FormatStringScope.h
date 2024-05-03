@@ -29,7 +29,7 @@ namespace instances {
 
         public:
             static FormatStringScope *get(bool Wideness) {
-                return get(Wideness, true);
+                return get(Wideness, false);
             }
 
             bool isWide() const {return Wide;}

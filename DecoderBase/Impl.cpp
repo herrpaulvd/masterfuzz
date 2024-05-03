@@ -5,6 +5,7 @@
 #include "ASTNode.h"
 #include "ByteStream.h"
 #include "Scope.h"
+#include <algorithm>
 #include <vector>
 
 using namespace decoder;
@@ -35,7 +36,7 @@ int decoder::selectInSet(const std::vector<int> &Set, int AbsMax, int Seed) {
     return Set[Seed % Set.size()];
 }
 
-bool decoder::selectBool(int AllowTrue, int AllowFalse, int Seed) {
+bool decoder::selectBool(bool AllowTrue, bool AllowFalse, int Seed) {
     if(!AllowTrue) return false;
     if(!AllowFalse) return true;
     return (Seed & 1);
@@ -103,8 +104,16 @@ ASTNode *Decoder::GenerateNode(ByteStream *Stream, Scope *CurrentScope) {
         // The amount of ast node kinds is definetly less than INT_MAX.
         ChoiceSeed = 0;
         Stream->readBytes(BytesNeeded, &ChoiceSeed);
-        ChoiceSeed = selectInSet(Cache.SelectedKinds, KindsCount - 1, ChoiceSeed);
-        CurrentKind = AllKinds[ChoiceSeed];
+        if(Cache.SelectedKinds.empty()) {
+            ChoiceSeed = 0;
+            CurrentKind = Stub;
+            Cache.InfoFields.clear();
+            Cache.InfoFields.emplace_back();
+        } else {
+            ChoiceSeed = selectInSet(Cache.SelectedKinds, KindsCount - 1, ChoiceSeed);
+            CurrentKind = AllKinds[ChoiceSeed];
+            ChoiceSeed = std::find(Cache.SelectedKinds.begin(), Cache.SelectedKinds.end(), ChoiceSeed) - Cache.SelectedKinds.begin();
+        }
     }
     std::vector<int> &CurrentInfoFields = Cache.InfoFields[ChoiceSeed];
 
