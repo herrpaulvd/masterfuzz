@@ -59,7 +59,7 @@ std::string decoder::makeTypeName(int PtrDepth, int BaseSizeExp, bool Float, boo
         }
     } else {
         if(!Signed) TypeName.append("un");
-        TypeName.append("signed ");
+        if(!Signed || BaseSizeExp != 0) TypeName.append("signed ");
         switch (BaseSizeExp) {
         default: throw "Unknown integer type";
         case 0: TypeName.append("char"); break;

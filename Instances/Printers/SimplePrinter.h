@@ -144,8 +144,11 @@ namespace instances {
                     print('(');
                     print(Cast);
                     print(')'); // Close type part.
+                    // To cast anything to anything without CE,
+                    // need intermediate cast to ULL. 
+                    print("(unsigned long long)");
                 }
-                print(')'); // Start arg part.
+                print('('); // Start arg part.
             }
 
             virtual void endCast() {
@@ -234,6 +237,7 @@ namespace instances {
             }
 
             virtual void endDoWhileCondition() {
+                clearParentInfo();
                 print(");");
             }
 
@@ -314,6 +318,7 @@ namespace instances {
 
             virtual void endDelete() {
                 print(';');
+                clearParentInfo();
             }
 
             virtual void printConst(const std::string &S) {print(S);}

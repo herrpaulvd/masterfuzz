@@ -19,12 +19,15 @@
 #include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/GlobalScope.h"
 #include "Instances/Scopes/SingleStringScope.h"
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <sched.h>
 #include <string>
 #include <tuple>
 #include <vector>
+#include <unistd.h>
 
 using namespace decoder;
 using namespace instances::bytestreams;
@@ -42,7 +45,7 @@ Decoder buildDecoder() {
         "",
         "int main(void) {",
         "  int **ipp = 0;",
-        "  int *ip[10];",
+        "  int ip[10];",
         "  int x = 1;",
         "  int y = 0;",
         "  float z = 0.5;",
@@ -140,25 +143,33 @@ void printFile(const char *Filename) {
     in.close();
 }
 
-const int StartSeed = 0;
+const int StartSeed = 3810;
 const char *Source = "input.cpp";
 const char *Binary = "prg";
-const char *Command = "g++ input.cpp -o prg";
+const char *Command = "g++ input.cpp -fsigned-char -o prg";
+
+int runCompilation() {
+    return system(Command);
+}
 
 // Maybe there's some shortness bug, not sure.
 // Or issues with probability.
 // 1) try to fuzz just so
-// 2) change probabilities
-// 3) check for every seed, what is the first value.
+// 2) change probabilities [SEL]
+// 3) check for every seed, what is the first value. [all OK]
 int main(int argc, char** argv){
     for(int Seed = StartSeed; ; Seed++) {
-        std::cout << "TEST #" << Seed << std::endl << std::endl << std::endl;
+        std::cout << "TEST #" << Seed << std::endl;
         instances::bytestreams::RandomByteStream BS(Seed);
         Decoder D = buildDecoder();
         ASTNode *Tree = D.GenerateAST(&BS);
         SimplePrinter P(Source);
         Tree->print(&P);
         P.close();
-        //printFile(Source);
+        if(runCompilation()) {
+            std::cout << "FAIL" << std::endl;
+            printFile(Source);
+            return 0;
+        }
     }
 }

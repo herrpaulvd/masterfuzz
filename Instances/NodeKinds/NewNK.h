@@ -84,17 +84,13 @@ namespace instances {
                 switch(Part) {
                 default: throw "Invalid children count";
                 case 0:
-                    // Let printer know that the next arg is a cast.
-                    SP->setParentInfo(ParentInfo::StringCast);
+                    SP->startNew();
                     break;
                 case 1:
-                    // Reset info for the next arg child.
-                    SP->clearParentInfo();
-                    SP->setParentInfo(ParentInfo::Expression);
+                    SP->middleNew();
                     break;
                 case 2:
-                    SP->clearParentInfo();
-                    SP->endCast();
+                    SP->endNew();
                     break;
                 }
             }

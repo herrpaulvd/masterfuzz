@@ -68,7 +68,7 @@ namespace instances {
                     1, 1,
                     0, 0,
                     1, 0, 1,
-                    1, 1
+                    1, 0
                 );
                 // PWChar scope is actually PVoid scope with cast.
                 // File scope is stdout only.
@@ -82,6 +82,7 @@ namespace instances {
                     1, 1
                 );
 
+                HasVarArgs = false;
                 for(ParamType T : Params) {
                     SingleStringScope *Cast;
                     Scope *Param;
@@ -122,6 +123,7 @@ namespace instances {
                     case ParamType::Varargs:
                         Cast = NotNeeded;
                         Param = VarargsScope;
+                        HasVarArgs = true;
                         break;
                     }
                     CastScopes.push_back(Cast);
@@ -165,7 +167,7 @@ namespace instances {
 
                 int FormalParamCount = F.ParamScopes.size();
                 int LastParam = FormalParamCount - 1;
-                int ActualParamCount = F.HasVarArgs ? FormalParamCount : LastParam + VarargsCount;
+                int ActualParamCount = F.HasVarArgs ? LastParam + VarargsCount : FormalParamCount;
                 for(int Actual = 0; Actual < ActualParamCount; Actual++) {
                     int Formal = std::min(Actual, LastParam);
                     OperandsScopes.push_back(F.CastScopes[Formal]);
