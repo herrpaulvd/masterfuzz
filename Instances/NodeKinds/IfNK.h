@@ -67,10 +67,10 @@ namespace instances {
                     SP->startIf();
                     break;
                 case 1:
-                    SP->startIfBody();
+                    SP->betweenIfConditionAndBody();
                     break;
                 case 2:
-                    SP->endIfBody();
+                    SP->endIf();
                     if(HasElse)
                         SP->startElse();
                     break;

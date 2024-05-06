@@ -4,7 +4,7 @@
 #include "DecoderBase/Printer.h"
 #include <cassert>
 #include <fstream>
-#include <iostream>
+#include <ostream>
 #include <stack>
 #include <string>
 #include <vector>
@@ -78,19 +78,29 @@ namespace instances {
                 endLine();
             }
 
-            virtual void startBody() {
+            template<typename T> void endLine(T value) {
+                print(value);
+                endLine();
+            }
+
+            // ParentInfo is some info from parents.
+            ParentInfo getParentInfo() {return ParentStack.top();}
+            void setParentInfo(ParentInfo value) {ParentStack.push(value);}
+            void clearParentInfo() {ParentStack.pop();}
+
+            void startBody() {
                 print(')');
                 pusht();
                 clearParentInfo();
                 setParentInfo(ParentInfo::Statement);
             }
 
-            virtual void endBody() {
+            void endBody() {
                 popt();
                 clearParentInfo();
             }
 
-            virtual void startConditionPart(const char *OpName) {
+            void startConditionPart(const char *OpName) {
                 startLine(OpName);
                 print('(');
                 setParentInfo(ParentInfo::Expression);
@@ -111,11 +121,6 @@ namespace instances {
             // For nice looking code, need to count tabs.
             void pusht() {Tabs++;}
             void popt() {Tabs--;}
-
-            // ParentInfo is some info from parents.
-            ParentInfo getParentInfo() {return ParentStack.top();}
-            void setParentInfo(ParentInfo value) {ParentStack.push(value);}
-            void clearParentInfo() {ParentStack.pop();}
 
             // Use virtual methods to let more sofisticated printers override them.
             virtual void startBlock() {
@@ -138,56 +143,103 @@ namespace instances {
                 clearParentInfo();
             }
 
-            virtual void startCast(const std::string &Cast) {
-                // Empty cast means no cast.
-                if(!Cast.empty()) {
-                    print('(');
-                    print(Cast);
-                    print(')'); // Close type part.
-                    // To cast anything to anything without CE,
-                    // need intermediate cast to ULL. 
-                    print("(unsigned long long)");
-                }
-                print('('); // Start arg part.
+            virtual void startCastTypePart() {
+                // Let printer know that the next arg is a cast.
+                setParentInfo(ParentInfo::StringCast);
+                // Do not print '(' because empty casts are allowed.
             }
 
-            virtual void endCast() {
-                print(')'); // Close arg part.
+            virtual void endCastTypePart() {
+                clearParentInfo();
             }
 
-            virtual void endArg() {
-                print(", ");
+            virtual void startCastArg() {
+                print('(');
+                // Let the child know it is an expression.
+                setParentInfo(ParentInfo::Expression);
             }
 
-            virtual void endStatement() {
-                print(';');
+            virtual void endCastArg() {
+                clearParentInfo();
+                print(')');
             }
 
-            virtual void startCall(const std::string &S) {
-                startLine(S);
+            virtual void startCallNamePart() {
+                // Let printer know that the next child is function name.
+                setParentInfo(ParentInfo::StringFuncall);
+            }
+
+            virtual void endCallNamePart() {
+                clearParentInfo();
                 print('(');
             }
 
+            virtual void startFunctionArg() {
+                setParentInfo(ParentInfo::Expression);
+            }
+
+            virtual void endFunctionArg() {
+                clearParentInfo();
+                print(", ");
+            }
+
             virtual void endCall() {
+                clearParentInfo();
+                print(");");
+            }
+
+            virtual void endCallName() {
                 print(')');
                 // If it's a statement call, end statement
                 if(getParentInfo() == ParentInfo::Statement)
-                    endStatement();
+                    endLine(';');
             }
 
-            virtual void startForLoop() {
+            virtual void startConst() {
+                // Let printer know that the next arg is a const.
+                setParentInfo(ParentInfo::StringConst);
+            }
+
+            virtual void endConst() {
+                clearParentInfo();
+            }
+
+            virtual void startDelete() {
+                startLine("delete ");
+                setParentInfo(ParentInfo::Expression);
+            }
+
+            virtual void endDelete() {
+                clearParentInfo();
+                endLine(';');
+            }
+
+            virtual void startFormatString() {
+                // Let printer know that the next arg is a const.
+                setParentInfo(ParentInfo::StringConst);
+            }
+
+            virtual void endFormatString() {
+                clearParentInfo();
+            }
+
+            virtual void startFor() {
                 startConditionPart("for");
             }
 
-            virtual void endForExpressionPart() {
-                print(';');
+            virtual void betweenForInitAndCondition() {
+                print("; ");
             }
 
-            virtual void startForBody() {
+            virtual void betweenForConditionAndStep() {
+                print("; ");
+            }
+
+            virtual void betweenForStepAndBody() {
                 startBody();
             }
 
-            virtual void endForBody() {
+            virtual void endFor() {
                 endBody();
             }
 
@@ -195,11 +247,11 @@ namespace instances {
                 startConditionPart("if");
             }
 
-            virtual void startIfBody() {
+            virtual void betweenIfConditionAndBody() {
                 startBody();
             }
 
-            virtual void endIfBody() {
+            virtual void endIf() {
                 endBody();
             }
 
@@ -213,46 +265,36 @@ namespace instances {
                 endBody();
             }
 
-            virtual void startWhile() {
-                startConditionPart("while");
-            }
-
-            virtual void startWhileBody() {
-                startBody();
-            }
-
-            virtual void endWhileBody() {
-                endBody();
-            }
-
-            virtual void startDoWhile() {
-                startLine("do");
-                setParentInfo(ParentInfo::Statement);
-                pusht();
-            }
-
-            virtual void startDoWhileCondition() {
-                endBody();
-                startConditionPart("while");
-            }
-
-            virtual void endDoWhileCondition() {
-                clearParentInfo();
-                print(");");
-            }
-
             virtual void startArray() {
                 print('(');
                 setParentInfo(ParentInfo::Expression);
             }
 
-            virtual void startIndex() {
+            virtual void endArrayStartIndex() {
                 print(")[");
+                // keep ParentInfo.
             }
 
             virtual void endIndex() {
-                print(']');
                 clearParentInfo();
+                print(']');
+            }
+
+            virtual void startNew() {
+                print("new ");
+                setParentInfo(ParentInfo::StringNew);
+            }
+
+            virtual void betweenNewTypePartAndSize() {
+                clearParentInfo();
+                // Prevent too big and negative memory allocation.
+                print("[(unsigned char)(");
+                setParentInfo(ParentInfo::Expression);
+            }
+
+            virtual void endNew() {
+                clearParentInfo();
+                print(")]");
             }
             
             virtual void startUnary(const char *Sign, bool Suffix) {
@@ -264,11 +306,11 @@ namespace instances {
             }
 
             virtual void endUnary(const char *Sign, bool Suffix) {
+                clearParentInfo();
                 print(')');
                 if(Suffix) print(Sign);
-                clearParentInfo();
                 if(getParentInfo() == ParentInfo::Statement)
-                    print(';');
+                    endLine(';');
             }
 
             // Even if operation sign is sometimes not needed to implement
@@ -285,54 +327,78 @@ namespace instances {
                 print(") ");
                 print(Sign);
                 print(" (");
+                // keep ParentInfo.
             }
 
             virtual void endBinary(const char *Sign) {
+                clearParentInfo();
                 print(')');
-                clearParentInfo();
                 if(getParentInfo() == ParentInfo::Statement)
-                    print(';');
+                    endLine(';');
             }
 
-            virtual void startNew() {
-                print("new ");
-                setParentInfo(ParentInfo::StringNew);
+            virtual void startVariable() {
+                // Let printer know that the next arg is a const.
+                setParentInfo(ParentInfo::StringVariable);
             }
 
-            virtual void middleNew() {
+            virtual void endVariable() {
                 clearParentInfo();
-                // Prevent too big and negative memory allocation.
-                print("[(unsigned char)(");
-                setParentInfo(ParentInfo::Expression);
             }
 
-            virtual void endNew() {
+            virtual void startWhile() {
+                startConditionPart("while");
+            }
+
+            virtual void betweenWhileConditionAndBody() {
+                startBody();
+            }
+
+            virtual void endWhile() {
+                endBody();
+            }
+
+            virtual void startDoWhile() {
+                startLine("do");
+                setParentInfo(ParentInfo::Statement);
+                pusht();
+            }
+
+            virtual void betweenDoWhileBodyAndCondition() {
+                endBody();
+                startConditionPart("while");
+            }
+
+            virtual void endDoWhile() {
                 clearParentInfo();
-                print(")]");
+                print(");");
             }
 
-            virtual void startDelete() {
-                startLine("delete ");
-                setParentInfo(ParentInfo::Expression);
-            }
-
-            virtual void endDelete() {
-                print(';');
-                clearParentInfo();
+            virtual void printCastTypeName(const std::string &Cast) {
+                // Empty cast means no cast.
+                if(!Cast.empty()) {
+                    print('(');
+                    print(Cast);
+                    print(')'); // Close type part.
+                    // To cast anything to anything without CE,
+                    // need intermediate cast to ULL. 
+                    print("(unsigned long long)");
+                }
             }
 
             virtual void printConst(const std::string &S) {print(S);}
             virtual void printVariable(const std::string &S) {print(S);}
             virtual void printNewArg(const std::string &S) {print(S);}
+            virtual void printFunctionName(const std::string &S) {print(S);}
 
             virtual void emitSingleString(const std::string &S) {
                 switch(getParentInfo()) {
                 default: throw "Invalid string kind";
                 case ParentInfo::StringFuncall:
-                    startCall(S);
+                    printFunctionName(S);
                     break;
                 case ParentInfo::StringCast:
-                    startCast(S);
+                    printCastTypeName(S);
                     break;
                 case ParentInfo::StringConst:
                     printConst(S);

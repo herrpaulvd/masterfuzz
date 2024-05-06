@@ -180,34 +180,26 @@ namespace instances {
                 assert(SP);
 
                 if(Part == 0) {
-                    // Let printer know that the next child is function name.
-                    SP->setParentInfo(ParentInfo::StringFuncall);
-                    // Then the printer will emit funcall when meeting
-                    // the child.
+                    SP->startCallNamePart();
                     return;
                 }
 
-                // Clear after prev part.
-                SP->clearParentInfo();
-
-                // Odds are casts, evens are args.
                 if(Part & 1) {
-                    // Probably, some arg has been emitted before,
-                    // need to close it.
-                    if(Part > 1) {
-                        SP->endCast();
+                    if(Part == 1)
+                        SP->endCallNamePart();
+                    else {
+                        SP->endCastArg();
                         if(Last) {
                             SP->endCall();
                             return;
                         }
-                        SP->endArg();
+                        SP->endFunctionArg();
                     }
-
-                    // Let printer know that the next child is a cast.
-                    SP->setParentInfo(ParentInfo::StringCast);
+                    SP->startFunctionArg();
+                    SP->startCastTypePart();
                 } else {
-                    // Let the child know it is an expression.
-                    SP->setParentInfo(ParentInfo::Expression);
+                    SP->endCastTypePart();
+                    SP->startCastArg();
                 }
             }
         };

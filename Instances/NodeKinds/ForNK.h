@@ -57,17 +57,19 @@ namespace instances {
                 switch(Part) {
                 default: throw "Invalid children count";
                 case 0:
-                    SP->startForLoop();
+                    SP->startFor();
                     break;
                 case 1:
+                    SP->betweenForInitAndCondition();
+                    break;
                 case 2:
-                    SP->endForExpressionPart();
+                    SP->betweenForConditionAndStep();
                     break;
                 case 3:
-                    SP->startForBody();
+                    SP->betweenForStepAndBody();
                     break;
                 case 4:
-                    SP->endForBody();
+                    SP->endFor();
                     break;
                 }
             }

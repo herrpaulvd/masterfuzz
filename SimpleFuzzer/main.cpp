@@ -129,6 +129,7 @@ Decoder buildDecoder() {
             OpNKs[{Op, AllowFloat, Suffix, OpKind::Kind}],
         #include "Instances/NodeKinds/AllOperations.inc"
         #undef OPERATION
+        // TODO: two variants of delete.
     };
 
     // Build new decoder every time because after use it becomes invalid.
@@ -143,7 +144,7 @@ void printFile(const char *Filename) {
     in.close();
 }
 
-const int StartSeed = 3810;
+const int StartSeed = 0;
 const char *Source = "input.cpp";
 const char *Binary = "prg";
 const char *Command = "g++ input.cpp -fsigned-char -o prg";

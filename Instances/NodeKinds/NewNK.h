@@ -87,7 +87,7 @@ namespace instances {
                     SP->startNew();
                     break;
                 case 1:
-                    SP->middleNew();
+                    SP->betweenNewTypePartAndSize();
                     break;
                 case 2:
                     SP->endNew();

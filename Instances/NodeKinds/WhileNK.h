@@ -70,10 +70,10 @@ namespace instances {
                         SP->startDoWhile();
                         break;
                     case 1:
-                        SP->startDoWhileCondition();
+                        SP->betweenDoWhileBodyAndCondition();
                         break;
                     case 2:
-                        SP->endDoWhileCondition();
+                        SP->endDoWhile();
                         break;
                     }
                 } else {
@@ -83,10 +83,10 @@ namespace instances {
                         SP->startWhile();
                         break;
                     case 1:
-                        SP->startWhileBody();
+                        SP->betweenWhileConditionAndBody();
                         break;
                     case 2:
-                        SP->endWhileBody();
+                        SP->endWhile();
                         break;
                     }
                 }

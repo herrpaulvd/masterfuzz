@@ -92,11 +92,10 @@ namespace instances {
                 switch(Part) {
                 default: throw "Invalid children count";
                 case 0:
-                    // Let printer know that the next arg is a const.
-                    SP->setParentInfo(ParentInfo::StringVariable);
+                    SP->startVariable();
                     break;
                 case 1:
-                    SP->clearParentInfo();
+                    SP->endVariable();
                     break;
                 }
             }

@@ -104,7 +104,7 @@ namespace instances {
                     SP->startArray();
                     break;
                 case 1:
-                    SP->startIndex();
+                    SP->endArrayStartIndex();
                     break;
                 case 2:
                     SP->endIndex();
