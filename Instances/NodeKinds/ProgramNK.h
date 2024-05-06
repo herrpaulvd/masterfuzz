@@ -39,15 +39,10 @@ namespace instances {
                 SimplePrinter *SP = dynamic_cast<SimplePrinter *>(P);
                 assert(SP);
 
-                if(Part == 0) {
-                    SP->printParts(Header);
-                    SP->pusht();
-                    SP->setParentInfo(ParentInfo::Statement);
-                } else {
-                    SP->popt();
-                    SP->printParts(Footer);
-                    SP->clearParentInfo();
-                }
+                if(Part == 0)
+                    SP->startProgram(Header);
+                else
+                    SP->endProgram(Footer);
             }
         };
     }

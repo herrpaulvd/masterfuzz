@@ -68,10 +68,10 @@ namespace instances {
                 switch(Part) {
                 default: throw "Invalid children count";
                 case 0:
-                    SP->setParentInfo(ParentInfo::StringConst);
+                    SP->startConst();
                     break;
                 case 1:
-                    SP->clearParentInfo();
+                    SP->endConst();
                     break;
                 }
             }

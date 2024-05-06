@@ -389,7 +389,7 @@ namespace instances {
             virtual void printConst(const std::string &S) {print(S);}
             virtual void printVariable(const std::string &S) {print(S);}
             virtual void printNewArg(const std::string &S) {print(S);}
-            virtual void printFunctionName(const std::string &S) {print(S);}
+            virtual void printFunctionName(const std::string &S) {startLine(S);}
 
             virtual void emitSingleString(const std::string &S) {
                 switch(getParentInfo()) {
@@ -419,6 +419,18 @@ namespace instances {
             virtual void printParts(const std::vector<std::string> &PS) {
                 for(auto &P : PS)
                     printLine(P);
+            }
+
+            virtual void startProgram(const std::vector<std::string> &Header) {
+                printParts(Header);
+                pusht();
+                setParentInfo(ParentInfo::Statement);
+            }
+
+            virtual void endProgram(const std::vector<std::string> &Footer) {
+                popt();
+                clearParentInfo();
+                printParts(Footer);
             }
         };
     }
