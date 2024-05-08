@@ -19,6 +19,8 @@ namespace decoder {
     bool less(int Left, int Right, bool &Result);
 
     std::string makeTypeName(int PtrDepth, int BaseSizeExp, bool Float, bool Signed, bool Const);
+
+    bool printAndGet(const char *Caption, bool value);
 }
 
 #endif

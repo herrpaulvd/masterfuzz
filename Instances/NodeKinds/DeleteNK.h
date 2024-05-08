@@ -7,9 +7,7 @@
 #include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/ExpressionScope.h"
 #include "Instances/Scopes/StatementScope.h"
-#include <algorithm>
 #include <cassert>
-#include <utility>
 #include <vector>
 
 using namespace decoder;

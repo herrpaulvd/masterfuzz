@@ -6,6 +6,7 @@
 #include "ByteStream.h"
 #include "Scope.h"
 #include <algorithm>
+#include <iostream>
 #include <vector>
 
 using namespace decoder;
@@ -70,6 +71,11 @@ std::string decoder::makeTypeName(int PtrDepth, int BaseSizeExp, bool Float, boo
     }
     while(PtrDepth--) TypeName.push_back('*');
     return TypeName;
+}
+
+bool decoder::printAndGet(const char *Caption, bool value) {
+    std::cout << Caption << ' ' << value << std::endl;
+    return value;
 }
 
 ASTNode *Decoder::GenerateNode(ByteStream *Stream, Scope *CurrentScope) {

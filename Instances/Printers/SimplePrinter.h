@@ -2,6 +2,7 @@
 #define IP_SIMPLEPRINTER_H
 
 #include "DecoderBase/Printer.h"
+#include "DecoderBase/Utils.h"
 #include <cassert>
 #include <fstream>
 #include <ostream>
@@ -83,10 +84,21 @@ namespace instances {
                 endLine();
             }
 
+            int getParentStackSize() {return ParentStack.size();}
+
+            void printStackSize(const char *Action) {
+                return;
+                print("/* ");
+                print(Action);
+                print(": ");
+                print(getParentStackSize());
+                print("*/");
+            }
+
             // ParentInfo is some info from parents.
-            ParentInfo getParentInfo() {return ParentStack.top();}
-            void setParentInfo(ParentInfo value) {ParentStack.push(value);}
-            void clearParentInfo() {ParentStack.pop();}
+            ParentInfo getParentInfo() {printStackSize("get"); return ParentStack.top();}
+            void setParentInfo(ParentInfo value) {ParentStack.push(value); printStackSize("set");}
+            void clearParentInfo() {ParentStack.pop(); printStackSize("clear");}
 
             void startBody() {
                 print(')');
@@ -188,13 +200,6 @@ namespace instances {
                 print(");");
             }
 
-            virtual void endCallName() {
-                print(')');
-                // If it's a statement call, end statement
-                if(getParentInfo() == ParentInfo::Statement)
-                    endLine(';');
-            }
-
             virtual void startConst() {
                 // Let printer know that the next arg is a const.
                 setParentInfo(ParentInfo::StringConst);
@@ -205,7 +210,7 @@ namespace instances {
             }
 
             virtual void startDelete() {
-                startLine("delete ");
+                startLine("delete [] ");
                 setParentInfo(ParentInfo::Expression);
             }
 
@@ -431,6 +436,12 @@ namespace instances {
                 popt();
                 clearParentInfo();
                 printParts(Footer);
+            }
+
+#define PRNTRCHECKSTATE(x) decoder::printAndGet(#x , x)
+
+            virtual bool checkState() {
+                return PRNTRCHECKSTATE(Tabs == 0) && PRNTRCHECKSTATE(ParentStack.empty());
             }
         };
     }

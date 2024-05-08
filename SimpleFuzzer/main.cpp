@@ -16,6 +16,7 @@
 #include "Instances/NodeKinds/StubNK.h"
 #include "Instances/NodeKinds/VariableNK.h"
 #include "Instances/NodeKinds/WhileNK.h"
+#include "Instances/Printers/FlexiblePrinter.h"
 #include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Scopes/GlobalScope.h"
 #include "Instances/Scopes/SingleStringScope.h"
@@ -164,10 +165,12 @@ int main(int argc, char** argv){
         instances::bytestreams::RandomByteStream BS(Seed);
         Decoder D = buildDecoder();
         ASTNode *Tree = D.GenerateAST(&BS);
-        SimplePrinter P(Source);
+        FlexiblePrinter P(Source, "TEMPV");
         Tree->print(&P);
         P.close();
-        if(runCompilation()) {
+        // TODO: fix bug with parent stack.
+        // TODO: fix stub printing (add auto&).
+        if(!P.checkState() || runCompilation()) {
             std::cout << "FAIL" << std::endl;
             printFile(Source);
             return 0;
