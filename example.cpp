@@ -67,42 +67,104 @@ public:
     NOINLINE SmartPointer<T> operator+(long long Count) const {
         SmartPointer<T> Result = *this;
         long long *Ptr = (long long *)(&Result.Self);
-        *Ptr += Count;
+        *Ptr += Count * sizeof(T);
         return Result;
     }
 
     NOINLINE SmartPointer<T> operator-(long long Count) const {
         SmartPointer<T> Result = *this;
         long long *Ptr = (long long *)(&Result.Self);
-        *Ptr -= Count;
+        *Ptr -= Count * sizeof(T);
         return Result;
     }
 
     NOINLINE SmartPointer<T> operator+(unsigned long long Count) const {
         SmartPointer<T> Result = *this;
         unsigned long long *Ptr = (unsigned long long *)(&Result.Self);
-        *Ptr += Count;
+        *Ptr += Count * sizeof(T);
         return Result;
     }
 
     NOINLINE SmartPointer<T> operator-(unsigned long long Count) const {
         SmartPointer<T> Result = *this;
         unsigned long long *Ptr = (unsigned long long *)(&Result.Self);
-        *Ptr -= Count;
+        *Ptr -= Count * sizeof(T);
         return Result;
     }
 
-    // TODO: ++ --
-    // TODO: explicit from ull and ll
-    // TODO: []
-    // TODO: *
-    // TODO: implicit cast to char* and void* and explicit to wchar_t*
+    // postfix
+    NOINLINE SmartPointer<T> operator++(int) {
+        SmartPointer<T> Result = *this;
+        unsigned long long *Ptr = (unsigned long long *)(Self);
+        *Ptr += sizeof(T);
+        return Result;
+    }
+
+    // prefix
+    NOINLINE SmartPointer<T>& operator++() {
+        unsigned long long *Ptr = (unsigned long long *)(Self);
+        *Ptr += sizeof(T);
+        return *this;
+    }
+
+    // postfix
+    NOINLINE SmartPointer<T> operator--(int) {
+        SmartPointer<T> Result = *this;
+        unsigned long long *Ptr = (unsigned long long *)(Self);
+        *Ptr -= sizeof(T);
+        return Result;
+    }
+
+    // prefix
+    NOINLINE SmartPointer<T>& operator--() {
+        unsigned long long *Ptr = (unsigned long long *)(Self);
+        *Ptr -= sizeof(T);
+        return *this;
+    }
+
+    NOINLINE SmartPointer<T>(long long value) : Self((void *)value) {}
+    NOINLINE SmartPointer<T>(unsigned long long value) : Self((void *)value) {}
+
+    NOINLINE T& operator[](long long Index) {
+        return ((T*)Self)[Index];
+    }
+
+    NOINLINE T& operator[](unsigned long long Index) {
+        return ((T*)Self)[Index];
+    }
+
+    NOINLINE T& operator*() {
+        return *((T*)Self);
+    }
 
     NOINLINE operator bool() const {return Self;}
 
     NOINLINE explicit operator unsigned long long() const {
         return (unsigned long long)Self;
     }
+
+    NOINLINE operator char*() const {
+        return (char *)Self;
+    }
+
+    NOINLINE operator void*() const {
+        return Self;
+    }
+
+    NOINLINE explicit operator wchar_t*() const {
+        return (wchar_t *)Self;
+    }
+
+    NOINLINE bool operator==(const SmartPointer<T> &Other) {
+        return Self == Other.Self;
+    }
+
+    NOINLINE bool operator <(const SmartPointer<T> &Other) {
+        return Self < Other.Self;
+    }
+
+    // TODO: check whether == and < is enough (and maybe < is enough).
+    // TODO: test it.
 };
 
 int main() {
