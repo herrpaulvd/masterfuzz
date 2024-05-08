@@ -13,6 +13,7 @@
 #include "Instances/NodeKinds/NewNK.h"
 #include "Instances/NodeKinds/OperationNK.h"
 #include "Instances/NodeKinds/ProgramNK.h"
+#include "Instances/NodeKinds/SpecialConstNK.h"
 #include "Instances/NodeKinds/StubNK.h"
 #include "Instances/NodeKinds/VariableNK.h"
 #include "Instances/NodeKinds/WhileNK.h"
@@ -43,6 +44,7 @@ Decoder buildDecoder() {
         "#include <string.h>",
         "#include <wchar.h>",
         "#include <stdio.h>",
+        "#include <limits.h>",
         "",
         "int main(void) {",
         "  int **ipp = 0;",
@@ -115,6 +117,7 @@ Decoder buildDecoder() {
         &TheCallNK,
         CastNK::get(),
         ConstantNK::get(),
+        SpecialConstNK::get(),
         DeleteNK::get(),
         FormatStringNK::get(),
         ForNK::get(),
@@ -165,11 +168,14 @@ int main(int argc, char** argv){
         instances::bytestreams::RandomByteStream BS(Seed);
         Decoder D = buildDecoder();
         ASTNode *Tree = D.GenerateAST(&BS);
+        //SimplePrinter P(Source);
         FlexiblePrinter P(Source, "TEMPV");
         Tree->print(&P);
         P.close();
-        // TODO: fix bug with parent stack.
-        // TODO: fix stub printing (add auto&).
+        // TODO: add brackets for any op.+
+        // TODO: fix stub printing (add auto&).+
+        // TODO: add special const. // need???+
+        // TODO: add argc to text + variables list.
         if(!P.checkState() || runCompilation()) {
             std::cout << "FAIL" << std::endl;
             printFile(Source);

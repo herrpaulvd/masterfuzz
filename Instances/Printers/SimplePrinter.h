@@ -3,6 +3,7 @@
 
 #include "DecoderBase/Printer.h"
 #include "DecoderBase/Utils.h"
+#include "Instances/Printers/UniquePrintGen.h"
 #include <cassert>
 #include <fstream>
 #include <ostream>
@@ -30,6 +31,7 @@ namespace instances {
             int Tabs = 0;
             bool LineEnd = true;
             std::stack<ParentInfo> ParentStack;
+            UniquePrintGen *Gen = 0;
         protected:
             void anchor() override {}
 
@@ -95,21 +97,27 @@ namespace instances {
                 print("*/");
             }
 
+            void emitUniquePrint() {
+                if(Gen) printLine(Gen->make());
+            }
+
             // ParentInfo is some info from parents.
             ParentInfo getParentInfo() {printStackSize("get"); return ParentStack.top();}
             void setParentInfo(ParentInfo value) {ParentStack.push(value); printStackSize("set");}
             void clearParentInfo() {ParentStack.pop(); printStackSize("clear");}
 
             void startBody() {
-                print(')');
+                endLine(") {");
                 pusht();
                 clearParentInfo();
                 setParentInfo(ParentInfo::Statement);
+                emitUniquePrint();
             }
 
             void endBody() {
                 popt();
                 clearParentInfo();
+                printLine('}');
             }
 
             void startConditionPart(const char *OpName) {
@@ -130,30 +138,11 @@ namespace instances {
                 close();
             }
 
+            void setGen(UniquePrintGen *Gen) {this->Gen = Gen;}
+
             // For nice looking code, need to count tabs.
             void pusht() {Tabs++;}
             void popt() {Tabs--;}
-
-            // Use virtual methods to let more sofisticated printers override them.
-            virtual void startBlock() {
-                // Block string usually starts with the same tabs count as
-                // the parent, so pop it before starting the block.
-                popt();
-                finishLine('{');
-                // Then push for its children.
-                pusht();
-                // Let children know they are Statements.
-                setParentInfo(ParentInfo::Statement);
-            }
-
-            virtual void endBlock() {
-                popt();
-                printLine('}');
-                // Push to let parents set tabs correctly.
-                pusht();
-                // Clear unused parent info.
-                clearParentInfo();
-            }
 
             virtual void startCastTypePart() {
                 // Let printer know that the next arg is a cast.
@@ -261,9 +250,10 @@ namespace instances {
             }
 
             virtual void startElse() {
-                startLine("else");
+                printLine("else {");
                 setParentInfo(ParentInfo::Statement);
                 pusht();
+                emitUniquePrint();
             }
 
             virtual void endElse() {
@@ -364,9 +354,10 @@ namespace instances {
             }
 
             virtual void startDoWhile() {
-                startLine("do");
+                printLine("do {");
                 setParentInfo(ParentInfo::Statement);
                 pusht();
+                emitUniquePrint();
             }
 
             virtual void betweenDoWhileBodyAndCondition() {

@@ -92,6 +92,12 @@ public:
         return Result;
     }
 
+    // TODO: ++ --
+    // TODO: explicit from ull and ll
+    // TODO: []
+    // TODO: *
+    // TODO: implicit cast to char* and void* and explicit to wchar_t*
+
     NOINLINE operator bool() const {return Self;}
 
     NOINLINE explicit operator unsigned long long() const {

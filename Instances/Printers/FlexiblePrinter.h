@@ -2,9 +2,6 @@
 #define IP_FLEXIBLEPRINTER_H
 
 #include "Instances/Printers/SimplePrinter.h"
-#include <cassert>
-#include <iostream>
-#include <sstream>
 #include <stack>
 #include <string>
 #include <vector>
@@ -87,18 +84,6 @@ namespace instances {
 
             //*** General ***//
             // ParentInfo:: Expression and Statement aren't used.
-            //***//
-
-            //*** Block ***//
-            
-            void startBlock() override final {
-                SimplePrinter::startBlock();
-            }
-
-            void endBlock() override final {
-                SimplePrinter::endBlock();
-            }
-
             //***//
 
             //*** Cast ***//
@@ -260,6 +245,7 @@ namespace instances {
                 endLine(':');
                 printLine('{'); // start the 2nd.
                 pusht();
+                emitUniquePrint();
             }
 
             void endFor() override final {
@@ -285,6 +271,7 @@ namespace instances {
                 print(extractTempName()); // Condition
                 endLine(") {");
                 pusht();
+                emitUniquePrint();
             }
 
             void endIf() override final {
@@ -295,6 +282,7 @@ namespace instances {
             void startElse() override final {
                 printLine("else {");
                 pusht();
+                emitUniquePrint();
             }
 
             void endElse() override final {
@@ -430,6 +418,7 @@ namespace instances {
             void startWhile() override final {
                 openStatement("while (true) {");
                 pushNextTempName(); // Condition.
+                emitUniquePrint();
             }
 
             void betweenWhileConditionAndBody() override final {
@@ -446,6 +435,7 @@ namespace instances {
             void startDoWhile() override final {
                 // Do-while emition is simpler through while.
                 openStatement("while (true) {");
+                emitUniquePrint();
             }
 
             void betweenDoWhileBodyAndCondition() override final {
@@ -473,7 +463,8 @@ namespace instances {
             }
 
             void printConst(const std::string &Const) override final {
-                emitOperationInit(false);
+                size_t Index = Const.rfind("[0]");
+                emitOperationInit(Const.size() >= 3 && Index == Const.size() - 3);
                 emitConst(Const);
                 emitOperationEnd();
             }

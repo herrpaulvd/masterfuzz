@@ -43,15 +43,7 @@ namespace instances {
                 while(ChildrenCount--) OperandsScopes.push_back(StatementScope::getLarge());
             }
 
-            void print(Printer *P, int Part, bool Last) const override {
-                SimplePrinter *SP = dynamic_cast<SimplePrinter *>(P);
-                assert(SP);
-
-                if(Part == 0)
-                    SP->startBlock();
-                if(Last)
-                    SP->endBlock();
-            }
+            void print(Printer *P, int Part, bool Last) const override {}
         };
     }
 }
