@@ -38,6 +38,8 @@ namespace instances {
             std::vector<SingleStringScope *> CastScopes;
             std::vector<Scope *> ParamScopes; // with varargs.
             bool HasVarArgs;
+            std::string ReplacementDef;
+            std::string ReplacementName;
 
             Function(const char *Name, std::initializer_list<ParamType> Params) {
                 NameScope = new SingleStringScope(Name, false);
@@ -83,52 +85,103 @@ namespace instances {
                 );
 
                 HasVarArgs = false;
+                ReplacementName = "repl_";
+                ReplacementName.append(Name);
+                ReplacementDef = "void ";
+                ReplacementDef.append(ReplacementName);
+                ReplacementDef.append(" (");
+                std::string ReplacementCall = Name;
+                ReplacementCall.push_back('(');
+
+                const char InitParamName = 'a';
+                char ParamName = InitParamName;
+                char LastParamName = ParamName;
                 for(ParamType T : Params) {
                     SingleStringScope *Cast;
                     Scope *Param;
+                    const char *TName;
                     switch(T) {
                     default: throw "Unknown param type";
                     case ParamType::Int:
                         Cast = NotNeeded;
                         Param = IntScope;
+                        TName = "int";
                         break;
                     case ParamType::SizeT:
                         Cast = NotNeeded;
                         Param = SizeScope;
+                        TName = "size_t";
                         break;
                     case ParamType::PVoid:
                         Cast = NotNeeded;
                         Param = PVoidScope;
+                        TName = "void*";
                         break;
                     case ParamType::PChar:
                         Cast = NotNeeded;
                         Param = PCharScope;
+                        TName = "char*";
                         break;
                     case ParamType::PWChar:
                         Cast = PWCharCast;
                         Param = PVoidScope;
+                        TName = "wchar_t*";
                         break;
                     case ParamType::File:
                         Cast = NotNeeded;
                         Param = FileScope;
+                        TName = "FILE*";
                         break;
                     case ParamType::Format:
                         Cast = NotNeeded;
                         Param = FormatScope;
+                        TName = "const char*";
                         break;
                     case ParamType::WFormat:
                         Cast = NotNeeded;
                         Param = WFormatScope;
+                        TName = "const wchar_t*";
                         break;
                     case ParamType::Varargs:
                         Cast = NotNeeded;
                         Param = VarargsScope;
                         HasVarArgs = true;
+                        TName = "...";
                         break;
                     }
                     CastScopes.push_back(Cast);
                     ParamScopes.push_back(Param);
+
+                    if(ReplacementDef.back() != '(') {
+                        ReplacementDef.append(", ");
+                        ReplacementCall.append(", ");
+                    }
+                    ReplacementDef.append(TName);
+                    if(T == ParamType::Varargs) {
+                        ReplacementCall.append("va");
+                    } else {
+                        ReplacementDef.push_back(' ');
+                        ReplacementDef.push_back(ParamName);
+                        ReplacementCall.push_back(ParamName);
+                        LastParamName = ParamName++;
+                    }
                 }
+
+                ReplacementCall.append(");");
+                ReplacementDef.append(") {");
+                if(HasVarArgs) {
+                    ReplacementDef.append("va_list va;va_start(va, ");
+                    ReplacementDef.push_back(LastParamName);
+                    ReplacementDef.append(");v");
+                }
+                ReplacementDef.append(ReplacementCall);
+                if(HasVarArgs)
+                    ReplacementDef.append("va_end(va);");
+                ReplacementDef.append("}\n");
+            }
+
+            const std::string &getName() {
+                return ((SingleStringScope *)NameScope)->getString();
             }
         };
 

@@ -48,10 +48,10 @@ namespace instances {
                 close();
             }
 
-            bool addSmartPointersSupport() {SupportSmartPointers = true;}
+            void addSmartPointersSupport() {SupportSmartPointers = true;}
 
-            void addOperationReplacement(const std::string &Sign, OperationReplacement Replacement) {
-                OperationReplacements[Sign] = Replacement;
+            OperationReplacement &getOperationReplacement(const std::string &Sign) {
+                return OperationReplacements[Sign];
             }
 
             void addFunctionReplacement(const std::string &Original, const std::string &Replacement) {
@@ -92,14 +92,13 @@ namespace instances {
             }
 
             void emitCall(const CallInfo &Info) override final {
-                const CallInfo *ResultCallInfo = &Info;
                 std::string &NewName = FunctionReplacements[Info.Name];
                 if(!NewName.empty()) {
                     CallInfo NewInfo(NewName);
                     NewInfo.Args = Info.Args;
-                    ResultCallInfo = &NewInfo;
+                    FlexiblePrinter::emitCall(NewInfo);
                 }
-                FlexiblePrinter::emitCall(*ResultCallInfo);
+                FlexiblePrinter::emitCall(Info);
             }
 
             void emitCast(const std::string &Cast, const std::string &Var) override final {
@@ -117,6 +116,55 @@ namespace instances {
                     print(Size);
                     print(')');
                 } else FlexiblePrinter::emitNew(Type, Size);
+            }
+
+            void emitConst(const std::string &Const) override final {
+                size_t CS = Const.size();
+                if(CS >= 3 && ((Const.rfind("[1]") == CS - 3) || Const.rfind("[0]") == CS - 3)) {
+                    // Find type and convert.
+                    int StarCount = 1;
+                    for(auto C : Const) if(C == '*') StarCount++;
+
+                    static const char *Types[] = {
+                        "char", "short", "int", "long long",
+                        "float", "double"
+                    };
+                    static int TypesCount = sizeof(Types)/sizeof(Types[0]);
+
+                    static const char *Mods[] = {
+                        "signed", "unsigned"
+                    };
+                    static int ModsCount = sizeof(Mods)/sizeof(Mods[0]);
+
+                    int Type, Mod;
+                    for(Type = 0; Type < TypesCount; Type++)
+                        if(Const.find(Types[Type]) != Const.npos)
+                            break;
+                    assert(Type != TypesCount);
+                    for(Mod = 0; Mod < ModsCount; Mod++)
+                        if(Const.find(Mods[Mod]) != Const.npos)
+                            break;
+
+                    std::string TypeStr;
+                    if(Mod != ModsCount) {
+                        TypeStr.append(Mods[Mod]);
+                        TypeStr.push_back(' ');
+                    }
+                    TypeStr.append(Types[Type]);
+                    while(StarCount--) TypeStr.push_back('*');
+                    TypeStr = ReplacePointerWithSmart(TypeStr);
+                    
+                    TypeStr.append("::alloc(1)");
+                    if(Const[Const.size() - 2] == '0') {
+                        TypeStr.append("[0]");
+                    }
+                    FlexiblePrinter::emitConst(TypeStr);
+                } else FlexiblePrinter::emitConst(Const);
+            }
+
+            void emitDelete(const std::string &Var) override final {
+                startLine(Var);
+                endLine(".destroyMany();");
             }
         };
     }

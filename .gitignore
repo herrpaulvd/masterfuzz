@@ -15,4 +15,5 @@ _deps
 .vscode
 .clangd/
 input.cpp
+input2.cpp
 prg

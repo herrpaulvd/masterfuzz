@@ -390,10 +390,7 @@ namespace instances {
             void endBinary(const char *Sign) override final {
                 std::string Right = extractTempName();
                 std::string Left = extractTempName();
-
-                static std::string Assignment = "=";
-
-                emitOperationInit(Sign == Assignment);
+                emitOperationInit(false);
                 emitBinary(Sign, Left, Right);
                 emitOperationEnd();
             }

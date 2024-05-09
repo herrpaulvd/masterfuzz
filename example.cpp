@@ -162,10 +162,12 @@ public:
     NOINLINE bool operator <(const SmartPointer<T> &Other) {
         return Self < Other.Self;
     }
-
-    // TODO: check whether == and < is enough (and maybe < is enough).
-    // TODO: test it.
 };
+
+#define STR(x) #x
+#define x
+#define y
+const char* Q = STR(x + y);
 
 int main() {
 
