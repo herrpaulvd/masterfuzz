@@ -12,3 +12,4 @@ add_subdirectory(SimpleFuzzer)
 add_executable(masterfuzz main.cpp)
 
 target_link_libraries(masterfuzz Instances)
+target_include_directories(masterfuzz PUBLIC "${PROJECT_SOURCE_DIR}")

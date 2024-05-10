@@ -20,9 +20,16 @@ namespace instances {
         private:
             std::vector<std::string> Header;
             std::vector<std::string> Footer;
+            ProgramNK()
+                : Header(), Footer() {}
         public:
-            ProgramNK(const std::vector<std::string> &Header, const std::vector<std::string> &Footer)
-                : Header(Header), Footer(Footer) {}
+            static ProgramNK *get() {
+                static ProgramNK Instance;
+                return &Instance;
+            }
+
+            void setHeader(const std::vector<std::string> &Header) {this->Header = Header;}
+            void setFooter(const std::vector<std::string> &Footer) {this->Footer = Footer;}
 
             bool getInfoFields(const Scope *S, std::vector<int> &Sizes) const
                 override {

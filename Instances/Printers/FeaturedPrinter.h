@@ -112,7 +112,7 @@ namespace instances {
                 if(SupportSmartPointers) {
                     print("SmartPointer<");
                     print(ReplacePointerWithSmart(Type));
-                    print(">::alloc(");
+                    print(">::alloc((unsigned char)");
                     print(Size);
                     print(')');
                 } else FlexiblePrinter::emitNew(Type, Size);

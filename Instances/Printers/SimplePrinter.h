@@ -289,7 +289,7 @@ namespace instances {
 
             virtual void endNew() {
                 clearParentInfo();
-                print(")]");
+                print(")]()");
             }
             
             virtual void startUnary(const char *Sign, bool Suffix) {

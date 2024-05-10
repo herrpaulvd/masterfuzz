@@ -335,7 +335,7 @@ namespace instances {
                 print(Type);
                 print(" [");
                 print(Size);
-                print("]");
+                print("]()");
             }
 
             void endNew() override final {

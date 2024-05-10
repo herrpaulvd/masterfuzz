@@ -55,7 +55,7 @@ namespace instances {
                 if(AllowRvalue) PtrDepth--;
                 std::string NewExpr = "new ";
                 NewExpr.append(makeTypeName(PtrDepth, BaseSizeExp, AllowFloat, AllowSigned, false));
-                NewExpr.append("[1]");
+                NewExpr.append("[1]()");
                 if(!AllowRvalue)
                     NewExpr = "(" + NewExpr + ")[0]";
                 OperandsScopes.push_back(new SingleStringScope(NewExpr, true));

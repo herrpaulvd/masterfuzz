@@ -17,7 +17,7 @@ namespace instances {
 
             std::string make() {
                 std::ostringstream out;
-                out << Prefix << Random << Suffix;
+                out << Prefix << Random() << Suffix;
                 return out.str();
             }
         };

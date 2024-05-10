@@ -8,7 +8,7 @@ struct SmartPointer {
         return SmartPointer<T>(Ptr);
     }
     template<typename INT> NOINLINE static SmartPointer<T> alloc(INT Count) {
-        return SmartPointer<T>(new T[Count]);
+        return SmartPointer<T>(new T[Count]());
     }
 
     NOINLINE void destroySingle() {delete (T *)Self;}

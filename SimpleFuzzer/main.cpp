@@ -96,18 +96,17 @@ Decoder buildDecoder(char* exe) {
         spin.close();
     }
 
+    static std::string Common;
+    if(Common.empty()) {
+        std::filesystem::directory_entry Entry(exe);
+        std::ifstream spin(Entry.path().parent_path().string() + "/Common.h");
+        Common = std::string(std::istreambuf_iterator<char>{spin}, {});
+        spin.close();
+    }
+
     static std::vector<std::string> Header = {
-        // includes
-        "#include <string.h>",
-        "#include <wchar.h>",
-        "#include <stdio.h>",
-        "#include <limits.h>",
-        "#include <stdarg.h>",
-        "",
-        
-        // macros
-        "#define NOINLINE __attribute__((noipa))",
-        "",
+        // includes and other common things.
+        Common,
 
         // SmartPointer
         SmartPointerDef,
@@ -148,13 +147,16 @@ Decoder buildDecoder(char* exe) {
 
         // main prefix
         "int main(void) {",
-        "  SmartPointer<SmartPointer<int>> ipp = 0;",
-        "  int _ip[10];",
-        "  SmartPointer<int> ip = SmartPointer<int>::capture(_ip);",
+        //"  SmartPointer<SmartPointer<int>> ipp = 0;",
+        "  int** ipp = 0;",
+        "  int ip[10];",
+        //"  int _ip[10];",
+        //"  SmartPointer<int> ip = SmartPointer<int>::capture(_ip);",
         "  int x = 1;",
         "  int y = 0;",
         "  float z = 0.5;",
-        "  SmartPointer<SmartPointer<SmartPointer<int>>> ippp = 0;",
+        //"  SmartPointer<SmartPointer<SmartPointer<int>>> ippp = 0;",
+        "  int*** ippp = 0;",
     };
     static std::vector<std::string> Footer = {
         "  printf(\"%lld %d %d %d %d %f\", ipp, ip[0], ip[9], x, y, z);",
@@ -241,9 +243,10 @@ int main(int argc, char** argv){
         Decoder D = buildDecoder(argv[0]);
         ASTNode *Tree = D.GenerateAST(&BS);
         
-        //SimplePrinter P(Source);
+        SimplePrinter P(Source);
         //FlexiblePrinter P(Source, "TEMPV");
         
+        /*
         FlexiblePrinter SP("input2.cpp", "TEMPV");
         FeaturedPrinter P(Source, "TEMPV");
         P.addSmartPointersSupport();
@@ -269,11 +272,11 @@ int main(int argc, char** argv){
         for(auto FR : FunctionReplacements) {
             P.addFunctionReplacement(FR.first, FR.second);
         }
-        
+        */
         Tree->print(&P);
-        Tree->print(&SP);
+        //Tree->print(&SP);
         P.close();
-        SP.close();
+        //SP.close();
         // TODO: add brackets for any op.+
         // TODO: fix stub printing (add auto&).+
         // TODO: add special const. // need???+
