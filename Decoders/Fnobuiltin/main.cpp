@@ -1,11 +1,10 @@
 #include "DecoderBase/ASTNode.h"
 #include "DecoderBase/Decoder.h"
-#include "Instances/ByteStreams/RandomByteStream.h"
+#include "Instances/ByteStreams/FileByteStream.h"
 #include "Instances/Printers/SimplePrinter.h"
-#include <cstdlib>
-#include <iostream>
 #include <vector>
 
+#define EXTRAARG
 #include "Builder.h"
 #include "Definitions.h"
 
@@ -21,68 +20,52 @@ std::vector<VariableBuilder> Variables = {
     {"s", 1, 0, 1, 0, 0, "(char*)(\"Hello World!\")"}
 };
 
-const int StartSeed = 0;
-const char *Source = "input.cpp";
-const char *Binary = "prg";
-const char *Command = "g++ input.cpp -fsigned-char -o prg";
-
-int runCompilation() {
-    return system(Command);
-}
-
 int main(int argc, char **argv) {
-    bool Class2 = argc > 1 && argv[1][0] == '2';
+    bool Class2 = Extra[0] == '2';
     std::vector<FunctionBuilder> *Funcs = Class2 ? &Functions2only : &Functions;
-    for(int Seed = StartSeed; ; Seed++) {
-        std::cout << "TEST #" << Seed << std::endl;
-        instances::bytestreams::RandomByteStream BS(Seed);
-        /*
-            bool EnableMemory, // new, delete, indexation, ptr operations
-            bool EnableShifts, // << and >>
-            bool EnableLoops, // do we require loops
-            bool NoFloat, // prohibit floats
-            bool DisableDangerous // prohibit any operation causing RE except [] and funcs
-        */
-        
-        Decoder *D = buildDecoder<false, false, false, true, false>(Variables, *Funcs);
-        ASTNode *Tree = D->GenerateAST(&BS);
-        /*
-            bool EnableFunctionReplacements,
-            bool EnableOperationReplacements,
-            bool EnableSmartPointers,
-            bool EnableUniquePrint,
-            bool OutsideFunction,
-            bool CheckDiv,
-            bool CheckShift,
-            bool PrintAfterDelete
-        */
-        SimplePrinter *P = buildPrinter<false, false, false, false, false, false, false, false>(
-            Variables, *Funcs, "input.cpp", "TEMPV", argv[0]);
-        Tree->print(P);
-        P->close();
-        if(runCompilation()) {
-            std::cout << "FAIL" << std::endl;
-            return 0;
-        }
-        system("cp input.cpp input2.cpp");
+    // For Fnobuiltin, args are shifted to 1 because of class detection
+    instances::bytestreams::FileByteStream BS(Bincode);
 
-        /*
-            bool EnableFunctionReplacements,
-            bool EnableOperationReplacements,
-            bool EnableSmartPointers,
-            bool EnableUniquePrint,
-            bool OutsideFunction,
-            bool CheckDiv,
-            bool CheckShift,
-            bool PrintAfterDelete
-        */
-        P = buildPrinter<true, false, false, false, false, false, false, false>(
-            Variables, *Funcs, "input.cpp", "TEMPV", argv[0]);
-        Tree->print(P);
-        P->close();
-        if(runCompilation()) {
-            std::cout << "FAIL" << std::endl;
-            return 0;
-        }
-    }
+    /*
+        bool EnableMemory, // new, delete, indexation, ptr operations
+        bool EnableShifts, // << and >>
+        bool EnableLoops, // do we require loops
+        bool NoFloat, // prohibit floats
+        bool DisableDangerous // prohibit any operation causing RE except [] and funcs
+    */
+    Decoder *D = buildDecoder<true, true, true, true, false>(Variables, *Funcs);
+    ASTNode *Tree = D->GenerateAST(&BS);
+    BS.close();
+
+    /*
+        bool EnableFunctionReplacements,
+        bool EnableOperationReplacements,
+        bool EnableSmartPointers,
+        bool EnableUniquePrint,
+        bool OutsideFunction,
+        bool CheckDiv,
+        bool CheckShift,
+        bool PrintAfterDelete
+    */
+    SimplePrinter *P = buildPrinter<false, false, false, false, false, false, false, false>(
+        Variables, *Funcs, Source1, Prefix, exe);
+    Tree->print(P);
+    P->close();
+
+    /*
+        bool EnableFunctionReplacements,
+        bool EnableOperationReplacements,
+        bool EnableSmartPointers,
+        bool EnableUniquePrint,
+        bool OutsideFunction,
+        bool CheckDiv,
+        bool CheckShift,
+        bool PrintAfterDelete
+    */
+    P = buildPrinter<true, true, false, false, false, false, false, false>(
+        Variables, *Funcs, Source2, Prefix, exe);
+    Tree->print(P);
+    P->close();
+
+    return 0;
 }

@@ -1,4 +1,4 @@
 add_executable(
-    SimpleFuzzer
+    SimpleGenerator
     main.cpp
 )

@@ -477,3 +477,16 @@ SimplePrinter *buildPrinter(
 
     return SP;
 }
+
+#ifdef EXTRAARG
+#define Extra argv[1]
+#define Bincode argv[2]
+#define Source1 argv[3]
+#define Source2 argv[4]
+#else
+#define Bincode argv[1]
+#define Source1 argv[2]
+#define Source2 argv[3]
+#endif
+#define exe argv[0]
+#define Prefix "TEMPV"

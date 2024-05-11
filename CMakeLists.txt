@@ -16,6 +16,7 @@ add_subdirectory(Decoders/WDivByZero)
 add_subdirectory(Decoders/WShifts)
 add_subdirectory(Decoders/Stack)
 add_subdirectory(Decoders/FnoDSE)
+add_subdirectory(Generators/SimpleGenerator)
 
 add_executable(masterfuzz main.cpp)
 
