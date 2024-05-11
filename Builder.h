@@ -21,7 +21,7 @@
 #include "Instances/Printers/SimplePrinter.h"
 #include "Instances/Printers/UniquePrintGen.h"
 #include "Instances/Scopes/GlobalScope.h"
-#include <initializer_list>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -30,6 +30,8 @@
 #endif
 
 #define BUILDER_H
+
+#define STR(x) #x
 
 using namespace decoder;
 using namespace instances::nodekinds;
@@ -52,22 +54,24 @@ struct VariableBuilder {
 
 struct FunctionBuilder {
     const char *Name;
-    std::initializer_list<ParamType> Args;
+    std::vector<ParamType> Params;
     const char *ReplacementName;
 
-    FunctionBuilder() : Name(), Args(), ReplacementName() {}
+    FunctionBuilder() : Name(), Params(), ReplacementName() {}
 
-    FunctionBuilder(const char *Name, std::initializer_list<ParamType> Args, const char *ReplacementName)
-        : Name(Name), Args(Args), ReplacementName(ReplacementName) {}
+    FunctionBuilder(const char *Name, std::vector<ParamType> Params, const char *ReplacementName)
+        : Name(Name), Params(Params), ReplacementName(ReplacementName) {}
 };
 
 template<
     bool EnableMemory, // new, delete, indexation, ptr operations
     bool EnableShifts, // << and >>
-    bool EnableLoops // do we require loops
+    bool EnableLoops, // do we require loops
+    bool NoFloat, // prohibit floats
+    bool DisableDangerous // prohibit any operation causing RE except [] and funcs
 > inline Decoder *buildDecoder(
-    std::initializer_list<VariableBuilder> Variables,
-    std::initializer_list<FunctionBuilder> Functions
+    std::vector<VariableBuilder> Variables,
+    std::vector<FunctionBuilder> Functions
 ) {
     // Add invariant NKs
     std::vector<ASTNodeKind *> NodeKinds = {
@@ -78,9 +82,11 @@ template<
         IfNK::get(false),
     };
     if(EnableMemory) {
-        NodeKinds.push_back(DeleteNK::get());
+        if(!DisableDangerous) {
+            NodeKinds.push_back(DeleteNK::get());
+            NodeKinds.push_back(NewNK::get());
+        }
         NodeKinds.push_back(IndexNK::get());
-        NodeKinds.push_back(NewNK::get());
     }
     if(EnableLoops) {
         NodeKinds.push_back(ForNK::get());
@@ -90,24 +96,25 @@ template<
 
     #define MEMORY(op) if(EnableMemory) op
     #define SHIFT(op) if(EnableShifts) op
+    #define DANGEROUS(op) if(!DisableDangerous) op
     #define OPERATION(Op, AllowFloat, Suffix, Kind) \
         NodeKinds.push_back(new OperationNK(Op, AllowFloat, Suffix, OpKind::Kind));
     #include "Include/AllOperations.inc"
     #undef MEMORY
     #undef SHIFT
+    #undef DANGEROUS
     #undef OPERATION
 
     int TerminalCount = 3 - (EnableMemory & EnableShifts);
     ConstantNK *CNK = ConstantNK::get();
     ASTNodeKind *VNK;
-    if(Variables.empty()) {
-        VNK = CNK;
-    } else {
+    if(Variables.size()) {
         std::vector<Variable> VarUses;
-        for(VariableBuilder &VB : Variables)
-            VarUses.emplace_back(VB.Name, VB.PtrDepth, VB.BaseSizeExp, VB.Signed, VB.ArraySize, VB.Float);
+        for(const VariableBuilder &VB : Variables)
+            VarUses.emplace_back(VB.Name, VB.PtrDepth, VB.BaseSizeExp, VB.Signed, VB.Float, VB.ArraySize);
         VNK = new VariableNK(VarUses);
-    }
+    } else VNK = CNK;
+
     while(TerminalCount--) {
         NodeKinds.push_back(VNK);
         NodeKinds.push_back(CNK);
@@ -117,10 +124,10 @@ template<
     if(Functions.size()) {
         std::vector<Function> FunUses;
         bool HasFormat = false;
-        for(FunctionBuilder &FB: Functions) {
-            FunUses.emplace_back(FB.Name, FB.Args);
+        for(const FunctionBuilder &FB: Functions) {
+            FunUses.emplace_back(FB.Name, FB.Params);
             if(!HasFormat) {
-                for(ParamType PT : FB.Args)
+                for(ParamType PT : FB.Params)
                     if(PT == ParamType::Format || PT == ParamType::WFormat) {
                         HasFormat = true;
                         break;
@@ -132,25 +139,29 @@ template<
             NodeKinds.push_back(FormatStringNK::get());
     }
 
-    return new Decoder(instances::scopes::GlobalScope::getLarge(), NodeKinds, StubNK::get());
+    return new Decoder(instances::scopes::GlobalScope::getLarge(), NodeKinds, StubNK::get(), NoFloat);
 }
 
-// TODO: header and footer autogen in buildPrinter
 template<
     bool EnableFunctionReplacements,
     bool EnableOperationReplacements,
     bool EnableSmartPointers,
-    bool EnableUniquePrint
+    bool EnableUniquePrint,
+    bool OutsideFunction,
+    bool CheckDiv, bool CheckShift,
+    bool PrintAfterDelete
 >
-Printer *buildPrinter(
-    std::initializer_list<VariableBuilder> Variables,
-    std::initializer_list<FunctionBuilder> Functions,
-    std::string Filename, std::string Prefix
+SimplePrinter *buildPrinter(
+    std::vector<VariableBuilder> Variables,
+    std::vector<FunctionBuilder> Functions,
+    std::string Filename, std::string Prefix,
+    const char *exe
 ) {
     SimplePrinter *SP;
     FeaturedPrinter *FP;
     if(EnableFunctionReplacements || EnableOperationReplacements
-        || EnableSmartPointers || EnableUniquePrint) {
+        || EnableSmartPointers
+        || CheckDiv || CheckShift || PrintAfterDelete) {
         SP = FP = new FeaturedPrinter(Filename, Prefix);
     } else {
         SP = new SimplePrinter(Filename);
@@ -158,24 +169,29 @@ Printer *buildPrinter(
     }
 
     std::vector<std::string> Header;
-    Header.push_back("<limits.h>");
-    if(EnableFunctionReplacements) Header.push_back("<stdarg.h>");
+    Header.push_back("#include <limits.h>");
+    if(EnableFunctionReplacements) Header.push_back("#include <stdarg.h>");
     Header.push_back("#include <stdio.h>");
     if(Functions.size()) {
         Header.push_back("#include <string.h>");
         Header.push_back("#include <wchar.h>");
     }
 
-    if(FP)
+    if(FP || EnableUniquePrint || OutsideFunction || PrintAfterDelete)
         Header.push_back("#define NOINLINE __attribute__((noipa))");
 
     if(EnableUniquePrint) {
-        Header.push_back("NOINLINE void print_unique(long long Number) {printf(\"%lld\n\", Number);}");
-        SP->setGen(new UniquePrintGen(0, "printf(\"%d\", ", ");"));
+        Header.push_back("NOINLINE void print_unique(long long Number) {printf(\"%lld\\n\", Number);}");
+        SP->setGen(new UniquePrintGen(0, "printf(\"%lld\", ", "LL);"));
+    }
+
+    if(PrintAfterDelete) {
+        Header.push_back("NOINLINE void printAfterDelete(unsigned long long Value) {printf(\"%d\", (int)*(char*)Value);}");
+        FP->setPrintAfterDelete("printAfterDelete");
     }
     
     if(EnableFunctionReplacements) {
-        for(FunctionBuilder &FB : Functions) {
+        for(const FunctionBuilder &FB : Functions) {
             bool HasVarArgs = false;
             std::string ReplacementDef = "void ";
             ReplacementDef.append(FB.ReplacementName);
@@ -188,7 +204,7 @@ Printer *buildPrinter(
             char ParamName = InitParamName;
             char LastParamName = ParamName;
 
-            for(ParamType T : Params) {
+            for(ParamType T : FB.Params) {
                 const char *TName;
                 switch(T) {
                 default: throw "Unknown param type";
@@ -211,7 +227,6 @@ Printer *buildPrinter(
                     TName = "FILE*";
                     break;
                 case ParamType::Format:
-                    Param = FormatScope;
                     TName = "const char*";
                     break;
                 case ParamType::WFormat:
@@ -294,36 +309,104 @@ Printer *buildPrinter(
         #undef BYREF
         #undef NOREF
         #undef LREF
+    }
 
-        #define SET_LEFT(op, kind) FP->getOperationReplacement(#op).kind
-        #define PREFIX(op) SET_LEFT(op, Prefix)
-        #define SUFFIX(op) SET_LEFT(op, Suffix)
-        #define INFIX(op) SET_LEFT(op, Infix)
+    #define SET_LEFT(op, kind) FP->getOperationReplacement(#op).kind
+    #define PREFIX(op) SET_LEFT(op, Prefix)
+    #define SUFFIX(op) SET_LEFT(op, Suffix)
+    #define INFIX(op) SET_LEFT(op, Infix)
 
+    if(EnableOperationReplacements) {
         #define UNARYFUN(Name, Kind, Ret, Args) \
             Kind = #Name;
         #define BINARYFUN(Name, Kind, Ret, Args) \
             Kind = #Name;
 
         #include "Include/OperationReplacements.inc"
-
-        if(EnableSmartPointers)
-            UNARYFUN(uref_smart, PREFIX(&), RETVAL, BYREF)
-
-        #undef SET_LEFT
-        #undef PREFIX
-        #undef SUFFIX
-        #undef INFIX
-        #undef UNARYFUN
-        #undef BINARYFUN
     }
 
-    Header.push_back("int main(int argc, char **argv) {");
-    Header.push_back("  if(argc > 3) return 0;");
-    for(VariableBuilder &VB : Variables) {
-        if(!VB.Initialization) continue;
+    if(EnableSmartPointers)
+        UNARYFUN(uref_smart, PREFIX(&), RETVAL, BYREF)
+
+    #undef SET_LEFT
+    #undef PREFIX
+    #undef SUFFIX
+    #undef INFIX
+    #undef UNARYFUN
+    #undef BINARYFUN
+
+    if(CheckDiv) {
+        Header.push_back(
+            "template<typename X, typename Y, typename Z> "
+            "NOINLINE Z bdiv_check(X x, Y y) {"
+            "if(y == 0) {printf(\"-Wdiv-by-zero\"); return 0;}"
+            "return x / y;}");
+        Header.push_back(
+            "template<typename X, typename Y, typename Z> "
+            "NOINLINE  bmod_check(X x, Y y) {"
+            "if(y == 0) {printf(\"-Wdiv-by-zero\"); return 0;}"
+            "return x % y;}");
+        FP->getOperationReplacement("/").Infix = "bdiv_check";
+        FP->getOperationReplacement("%").Infix = "bmod_check";
+    }
+
+    if(CheckShift) {
+        Header.push_back(
+            "template<typename X, typename Y, typename Z> "
+            "NOINLINE Z bshl_check(X x, Y y) {"
+            "if(y < 0) {printf(\"-Wshift-count-negative\"); return x;}"
+            "if(y >= sizeof(x)) {printf(\"-Wshift-count-overflow\"); return 0;}"
+            "return x << y;}");
+        Header.push_back(
+            "template<typename X, typename Y, typename Z> "
+            "NOINLINE Z bshr_check(X x, Y y) {"
+            "if(y < 0) {printf(\"-Wshift-count-negative\"); return x;}"
+            "if(y >= sizeof(x)) {printf(\"-Wshift-count-overflow\"); return 0;}"
+            "return x >> y;}");
+        FP->getOperationReplacement("<<").Infix = "bshl_check";
+        FP->getOperationReplacement(">>").Infix = "bshr_check";
+    }
+
+    if(OutsideFunction) {
+        std::string Foo = "NOINLINE void foo(";
+        for(const VariableBuilder &VB : Variables) {
+            if(!VB.Initialization) {
+                if(Foo.back() != '(') Foo.append(", ");
+                Foo.append(makeTypeName(VB.PtrDepth, VB.BaseSizeExp, VB.Float, VB.Signed, false));
+                Foo.push_back(' ');
+                Foo.append(VB.Name);
+            }
+        }
+        Foo.append(") {");
+        Header.push_back(Foo);
+    } else {
+        Header.push_back("int main(int argc, char **argv) {");
+        Header.push_back("  if(argc > 3) return 0;");
+    }
+    
+    for(const VariableBuilder &VB : Variables) {
         std::string Def = "  ";
-        Def.push_back(makeTypeName(VB.PtrDepth - (bool)VB.ArraySize, VB.BaseSizeExp, VB.Float, VB.Signed, VB.ArraySize));
+        if(!VB.Initialization) {
+            if(EnableSmartPointers && VB.PtrDepth) {
+                Def.append(makeSmartTypeName(VB.PtrDepth, VB.BaseSizeExp, VB.Float, VB.Signed, VB.ArraySize));
+                Def.push_back(' ');
+                Def.push_back('_');
+                Def.append(VB.Name);
+                Def.push_back('(');
+                Def.append(VB.Name);
+                Def.push_back(')');
+                Def.push_back(';');
+                Header.push_back(Def);
+                Def = "  #define ";
+                Def.append(VB.Name);
+                Def.push_back(' ');
+                Def.push_back('_');
+                Def.append(VB.Name);
+                Header.push_back(Def);
+            }
+            continue;
+        }
+        Def.append(makeTypeName(VB.PtrDepth - (bool)VB.ArraySize, VB.BaseSizeExp, VB.Float, VB.Signed, VB.ArraySize));
         Def.push_back(' ');
         if(EnableSmartPointers && VB.PtrDepth)
             Def.push_back('_');
@@ -331,7 +414,7 @@ Printer *buildPrinter(
         if(VB.ArraySize) {
             Def.push_back('[');
             Def.append(VB.ArraySize);
-            Def.push_back(']');
+            Def.append("] = {0};");
         } else {
             Def.append(" = ");
             Def.append(VB.Initialization);            
@@ -340,11 +423,8 @@ Printer *buildPrinter(
         Header.push_back(Def);
         if(EnableSmartPointers && VB.PtrDepth) {
             Def = "  ";
-            int PtrDepth = VB.PtrDepth;
-            while(PtrDepth--) Def.append("SmartPointer<");
-            Def.push_back(makeTypeName(0, VB.BaseSizeExp, VB.Float, VB.Signed, VB.ArraySize));
-            PtrDepth = VB.PtrDepth;
-            while(PtrDepth--) Def.push_back('>');
+            Def.append(makeSmartTypeName(VB.PtrDepth, VB.BaseSizeExp, VB.Float, VB.Signed, VB.ArraySize));
+            Def.push_back(' ');
             Def.append(VB.Name);
             Def.append("(_");
             Def.append(VB.Name);
@@ -357,9 +437,10 @@ Printer *buildPrinter(
     Program->setHeader(Header);
 
     std::vector<std::string> Footer;
+
     std::string Strprintf = "  printf(\"";
     std::string Args;
-    for(VariableBuilder &VB : Variables) {
+    for(const VariableBuilder &VB : Variables) {
         Strprintf.append("%lld\\n");
         Args.append(", ");
         Args.append("(long long)");
@@ -369,11 +450,30 @@ Printer *buildPrinter(
     Strprintf.append(Args);
     Strprintf.append(");");
     Footer.push_back(Strprintf);
+
+    if(OutsideFunction) {
+        Footer.push_back("}");
+        Footer.push_back("int main(int argc, char **argv) {");
+        Footer.push_back("  long long array[256] = {0};");
+        std::string FooCall = "  foo(";
+        for(const VariableBuilder &VB : Variables) {
+            if(!VB.Initialization) {
+                if(FooCall.back() != '(') FooCall.append(", ");
+                FooCall.push_back('(');
+                FooCall.append(makeTypeName(VB.PtrDepth, VB.BaseSizeExp, VB.Float, VB.Signed, false));
+                FooCall.push_back(')');
+                FooCall.append("(unsigned long long)");
+                FooCall.append("array");
+                if(!VB.PtrDepth) FooCall.append("[0]");
+            }
+        }
+        FooCall.append(");");
+        Footer.push_back(FooCall);
+    }
     Footer.push_back("  return 0;");
     Footer.push_back("}");
+
     Program->setFooter(Footer);
 
     return SP;
 }
-
-

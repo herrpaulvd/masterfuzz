@@ -41,7 +41,7 @@ namespace instances {
             std::string ReplacementDef;
             std::string ReplacementName;
 
-            Function(const char *Name, std::initializer_list<ParamType> Params) {
+            Function(const char *Name, std::vector<ParamType> Params) {
                 NameScope = new SingleStringScope(Name, false);
                 
                 static SingleStringScope *NotNeeded = new SingleStringScope("", false);

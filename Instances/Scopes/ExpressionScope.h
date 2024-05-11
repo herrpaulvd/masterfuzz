@@ -81,6 +81,13 @@ namespace instances {
                     AllowInt, AllowFloat, value);
             }
 
+            Scope *noFloat() override {
+                return get(PtrDepthMin, PtrDepthMax,
+                    BaseSizeExpMin, BaseSizeExpMax,
+                    AllowSigned, AllowUnsigned, AllowRvalue,
+                    AllowInt, 0, isShort());
+            }
+
             void printDebugInfo() const override {
                 std::cout << "ES " << getPtrDepthMin() << ' ' << getPtrDepthMax() << std::endl;
                 std::cout << getBaseSizeExpMin() << ' ' << getBaseSizeExpMax() << std::endl;

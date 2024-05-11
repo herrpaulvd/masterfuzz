@@ -1,3 +1,4 @@
+/*
 #include "DecoderBase/ASTNodeKind.h"
 #include "DecoderBase/Decoder.h"
 #include "Instances/ByteStreams/RandomByteStream.h"
@@ -245,8 +246,7 @@ int main(int argc, char** argv){
         
         SimplePrinter P(Source);
         //FlexiblePrinter P(Source, "TEMPV");
-        
-        /*
+
         FlexiblePrinter SP("input2.cpp", "TEMPV");
         FeaturedPrinter P(Source, "TEMPV");
         P.addSmartPointersSupport();
@@ -272,7 +272,6 @@ int main(int argc, char** argv){
         for(auto FR : FunctionReplacements) {
             P.addFunctionReplacement(FR.first, FR.second);
         }
-        */
         Tree->print(&P);
         //Tree->print(&SP);
         P.close();
@@ -287,4 +286,11 @@ int main(int argc, char** argv){
             return 0;
         }
     }
+}
+*/
+
+#include <iostream>
+int main(int argc, char **argv) {
+    std::cout << "HW" << std::endl;
+    return 0;
 }

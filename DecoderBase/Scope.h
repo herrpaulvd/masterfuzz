@@ -43,6 +43,8 @@ namespace decoder {
 
         void clearCache() {HasCache = false;}
 
+        virtual Scope *noFloat() {return this;}
+
         virtual void printDebugInfo() const {
             std::cout << "No Debug Info" << std::endl;
         }

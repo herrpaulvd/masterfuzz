@@ -1,6 +1,7 @@
 #ifndef IP_FLEXIBLEPRINTER_H
 #define IP_FLEXIBLEPRINTER_H
 
+#include "DecoderBase/Utils.h"
 #include "Instances/Printers/SimplePrinter.h"
 #include <stack>
 #include <string>
@@ -460,8 +461,7 @@ namespace instances {
             }
 
             void printConst(const std::string &Const) override final {
-                size_t Index = Const.rfind("[0]");
-                emitOperationInit(Const.size() >= 3 && Index == Const.size() - 3);
+                emitOperationInit(endsWith(Const, "[0]"));
                 emitConst(Const);
                 emitOperationEnd();
             }

@@ -14,9 +14,10 @@ namespace decoder {
         std::vector<ASTNodeKind *> AllKinds;
         ASTNodeKind *Stub;
         ASTNode *GenerateNode(ByteStream *Stream, Scope *CurrentScope);
+        bool NoFloat;
     public:
-        Decoder(Scope *Initial, const std::vector<ASTNodeKind *> &AllKinds, ASTNodeKind *Stub)
-            : Initial(Initial), AllKinds(AllKinds), Stub(Stub) {}
+        Decoder(Scope *Initial, const std::vector<ASTNodeKind *> &AllKinds, ASTNodeKind *Stub, bool NoFloat)
+            : Initial(Initial), AllKinds(AllKinds), Stub(Stub), NoFloat(NoFloat) {}
 
         ASTNode *GenerateAST(ByteStream *Stream) {
             return GenerateNode(Stream, Initial);

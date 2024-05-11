@@ -13,7 +13,7 @@ namespace instances {
             std::string Prefix, Suffix;
         public:
             UniquePrintGen(int Seed, const std::string &Prefix, const std::string &Suffix)
-                : Random(Seed) {}
+                : Random(Seed), Prefix(Prefix), Suffix(Suffix) {}
 
             std::string make() {
                 std::ostringstream out;

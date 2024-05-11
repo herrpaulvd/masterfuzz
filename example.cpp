@@ -170,5 +170,5 @@ public:
 const char* Q = STR(x + y);
 
 int main() {
-
+    char *c = (char*)("HW");
 }

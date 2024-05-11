@@ -1,6 +1,7 @@
 #ifndef IP_FEATUREDPRINTER_H
 #define IP_FEATUREDPRINTER_H
 
+#include "DecoderBase/Utils.h"
 #include "Instances/Printers/FlexiblePrinter.h"
 #include "Instances/Printers/SimplePrinter.h"
 #include <cassert>
@@ -28,6 +29,7 @@ namespace instances {
             std::map<std::string, OperationReplacement> OperationReplacements;
             std::map<std::string, std::string> FunctionReplacements;
             bool SupportSmartPointers = false;
+            const char *PrintAfterDelete = 0;
 
             static std::string ReplacePointerWithSmart(const std::string &Typename) {
                 int Count = 0;
@@ -47,6 +49,8 @@ namespace instances {
             ~FeaturedPrinter() {
                 close();
             }
+
+            void setPrintAfterDelete(const char *Function) {PrintAfterDelete = Function;}
 
             void addSmartPointersSupport() {SupportSmartPointers = true;}
 
@@ -120,7 +124,7 @@ namespace instances {
 
             void emitConst(const std::string &Const) override final {
                 size_t CS = Const.size();
-                if(CS >= 3 && ((Const.rfind("[1]") == CS - 3) || Const.rfind("[0]") == CS - 3)) {
+                if(SupportSmartPointers && (endsWith(Const,"[1]()") || endsWith(Const, "[0]"))) {
                     // Find type and convert.
                     int StarCount = 1;
                     for(auto C : Const) if(C == '*') StarCount++;
@@ -163,8 +167,17 @@ namespace instances {
             }
 
             void emitDelete(const std::string &Var) override final {
-                startLine(Var);
-                endLine(".destroyMany();");
+                if(SupportSmartPointers) {
+                    startLine(Var);
+                    endLine(".destroyMany();");
+                } else FlexiblePrinter::emitDelete(Var);
+                
+                if(PrintAfterDelete) {
+                    startLine(PrintAfterDelete);
+                    print("((unsigned long long)");
+                    print(Var);
+                    endLine(");");
+                }
             }
         };
     }

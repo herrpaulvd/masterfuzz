@@ -6,7 +6,9 @@
 #include "ByteStream.h"
 #include "Scope.h"
 #include <algorithm>
+#include <cstddef>
 #include <iostream>
+#include <string>
 #include <vector>
 
 using namespace decoder;
@@ -51,7 +53,6 @@ bool decoder::less(int Left, int Right, bool &Result) {
 
 std::string decoder::makeTypeName(int PtrDepth, int BaseSizeExp, bool Float, bool Signed, bool Const) {
     std::string TypeName;
-    if(Const) TypeName.append("const ");
     if(Float) {
         switch (BaseSizeExp) {
         default: throw "Unknown float type";
@@ -73,14 +74,46 @@ std::string decoder::makeTypeName(int PtrDepth, int BaseSizeExp, bool Float, boo
     return TypeName;
 }
 
+std::string decoder::makeSmartTypeName(int PtrDepth, int BaseSizeExp, bool Float, bool Signed, bool Const) {
+    std::string TypeName;
+    int Prefix = PtrDepth;
+    while(Prefix--) TypeName.append("SmartPointer<");
+    if(Float) {
+        switch (BaseSizeExp) {
+        default: throw "Unknown float type";
+        case 2: TypeName.append("float"); break;
+        case 3: TypeName.append("double"); break;
+        }
+    } else {
+        if(!Signed) TypeName.append("un");
+        if(!Signed || BaseSizeExp != 0) TypeName.append("signed ");
+        switch (BaseSizeExp) {
+        default: throw "Unknown integer type";
+        case 0: TypeName.append("char"); break;
+        case 1: TypeName.append("short"); break;
+        case 2: TypeName.append("int"); break;
+        case 3: TypeName.append("long long"); break;
+        }
+    }
+    while(PtrDepth--) TypeName.push_back('>');
+    return TypeName;
+}
+
 bool decoder::printAndGet(const char *Caption, bool value) {
     std::cout << Caption << ' ' << value << std::endl;
     return value;
 }
 
+bool decoder::endsWith(const std::string &S, const std::string &SS) {
+    if(S.size() < SS.size()) return false;
+    size_t Index = S.rfind(SS);
+    return Index == S.size() - SS.size();
+}
+
 ASTNode *Decoder::GenerateNode(ByteStream *Stream, Scope *CurrentScope) {
     // Get available kinds list.
     CurrentScope = CurrentScope->changeShortness(!Stream->isAlive());
+    if(NoFloat) CurrentScope = CurrentScope->noFloat();
     ScopeCache Cache;
     std::vector<int> Sizes;
     if(CurrentScope->hasCache())
