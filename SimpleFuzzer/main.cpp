@@ -20,7 +20,7 @@ int runTool(const char *Cmdline, const char *Toolname) {
 #define run(x) do { if(runTool(x.c_str(), #x)) return 0; } while(0)
 
 int main(int argc, char **argv) {
-    // Generator Decoder Checker limit bincode src1 src2 prg compiler
+    // Generator Decoder Checker bincode src1 src2 prg compiler
     int argp = 1;
 
     #define next argv[argp++]
@@ -28,9 +28,6 @@ int main(int argc, char **argv) {
     std::string Generator = next;
     std::string Decoder = next;
     std::string Checker = next;
-    
-    std::string Limit = next;
-    addArg(Generator, Limit);
     
     std::string BinCode = next;
     addArg(Generator, BinCode);

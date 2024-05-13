@@ -41,7 +41,7 @@ namespace instances {
                     Result.append("INT");
                     break;
                 case 3:
-                    Result.append("LONG_LONG");
+                    Result.append("LLONG");
                     break;
                 }
                 Result.append(Max ? "_MAX" : "_MIN");

@@ -3,6 +3,7 @@
 
 #include "DecoderBase/Utils.h"
 #include "Instances/Printers/SimplePrinter.h"
+#include <cstring>
 #include <stack>
 #include <string>
 #include <vector>
@@ -35,18 +36,9 @@ namespace instances {
             std::stack<CallInfo *> Calls;
 
         protected:
-            void printTempNamesSize(const char *Action) {
-                print("/* ");
-                print(Action);
-                print(": ");
-                print(TempNames.size());
-                print("*/");
-            }
-
-            void pushNextTempName() {TempNames.push(NextTempName++); printTempNamesSize("push");}
+            void pushNextTempName() {TempNames.push(NextTempName++);}
             
             std::string getCurrentTempName() {
-                printTempNamesSize("get");
                 if(TempNames.empty())
                     return makeTempName(NextTempName++);
                 return makeTempName(TempNames.top());
@@ -55,7 +47,6 @@ namespace instances {
             std::string extractTempName() {
                 int Suffix = TempNames.top();
                 TempNames.pop();
-                printTempNamesSize("extract");
                 return makeTempName(Suffix);
             }
 
@@ -377,6 +368,23 @@ namespace instances {
             }
 
             void middleBinary(const char *Sign) override final {
+                bool OrElse = strcmp(Sign, "||") == 0;
+                bool AndAlso = strcmp(Sign, "&&") == 0;
+                if(OrElse || AndAlso) {
+                    std::string Left = extractTempName();
+                    std::string Result = getCurrentTempName();
+                    startLine("bool ");
+                    print(Result);
+                    print(" = (bool)");
+                    print(Left);
+                    endLine(';');
+                    startLine("if(");
+                    if(OrElse) print('!');
+                    print(Result);
+                    endLine(") {");
+                    pusht();
+                }
+
                 pushNextTempName(); // Right.
             }
 
@@ -389,11 +397,23 @@ namespace instances {
             }
 
             void endBinary(const char *Sign) override final {
+                bool OrElse = strcmp(Sign, "||") == 0;
+                bool AndAlso = strcmp(Sign, "&&") == 0;
                 std::string Right = extractTempName();
-                std::string Left = extractTempName();
-                emitOperationInit(false);
-                emitBinary(Sign, Left, Right);
-                emitOperationEnd();
+                if(OrElse || AndAlso) {
+                    std::string Result = getCurrentTempName();
+                    startLine(Result);
+                    print(" = (bool)");
+                    print(Right);
+                    endLine(';');
+                    popt();
+                    printLine('}');
+                } else {
+                    std::string Left = extractTempName();
+                    emitOperationInit(false);
+                    emitBinary(Sign, Left, Right);
+                    emitOperationEnd();
+                }
             }
 
             //***//

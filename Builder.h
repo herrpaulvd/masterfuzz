@@ -441,6 +441,7 @@ SimplePrinter *buildPrinter(
     std::string Strprintf = "  printf(\"";
     std::string Args;
     for(const VariableBuilder &VB : Variables) {
+        if(VB.PtrDepth) continue;
         Strprintf.append("%lld\\n");
         Args.append(", ");
         Args.append("(long long)");

@@ -2,7 +2,9 @@
 #include "DecoderBase/Decoder.h"
 #include "Instances/ByteStreams/FileByteStream.h"
 #include "Instances/Printers/SimplePrinter.h"
+#include <string>
 
+#define EXTRAARG
 #include "Builder.h"
 #include "Definitions.h"
 
@@ -15,13 +17,15 @@ std::vector<VariableBuilder> Variables = {
     {"b2", 0, 1, 1, 0, 0, "SHRT_MAX"},
     {"c", 0, 2, 1, 0, 0, "INT_MAX"},
     {"argc", 0, 2, 1, 0, 0, 0},
-    {"d1", 0, 3, 1, 0, 0, "LONG_LONG_MAX"},
-    {"d2", 0, 3, 1, 0, 0, "LONG_LONG_MAX"},
+    {"d1", 0, 3, 1, 0, 0, "LLONG_MAX"},
+    {"d2", 0, 3, 1, 0, 0, "LLONG_MAX"},
     {"argv", 2, 0, 1, 0, 0, 0},
     {"argv2", 2, 0, 1, 0, 0, "0"},
 };
 
 int main(int argc, char **argv) {
+    std::string Config = Extra;
+
     // For Fnobuiltin, args are shifted to 1 because of class detection
     instances::bytestreams::FileByteStream BS(Bincode);
 
@@ -32,7 +36,15 @@ int main(int argc, char **argv) {
         bool NoFloat, // prohibit floats
         bool DisableDangerous // prohibit any operation causing RE except [] and funcs
     */
-    Decoder *D = buildDecoder<false, false, false, true, true>(Variables, NoFunctions);
+    Decoder *D = nullptr;
+    if(Config == "0")
+        D = buildDecoder<false, false, false, true, true>(Variables, NoFunctions);
+    else if(Config == "S")
+        D = buildDecoder<false, true, false, true, true>(Variables, NoFunctions);
+    else if(Config == "D")
+        D = buildDecoder<false, false, false, true, false>(Variables, NoFunctions);
+    else if(Config == "SD")
+        D = buildDecoder<false, true, false, true, false>(Variables, NoFunctions);
     ASTNode *Tree = D->GenerateAST(&BS);
     BS.close();
 
