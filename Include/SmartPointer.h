@@ -2,7 +2,7 @@
 template<typename T>
 struct SmartPointer {
     void *Self;
-    NOINLINE SmartPointer() {}
+    NOINLINE SmartPointer() : Self(0) {}
     NOINLINE SmartPointer(void *Self) : Self(Self) {}
     NOINLINE static SmartPointer<T> capture(T *Ptr) {
         return SmartPointer<T>(Ptr);

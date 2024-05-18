@@ -23,6 +23,7 @@ namespace instances {
             StringConst, // Next child is a const.
             StringVariable, // Next child is a variable.
             StringNew, // Next child is new operator argument.
+            StringStub, // Next child is a stub const.
         };
 
         class SimplePrinter : public Printer {
@@ -370,6 +371,14 @@ namespace instances {
                 print(");");
             }
 
+            virtual void startStub() {
+                setParentInfo(ParentInfo::StringStub);
+            }
+
+            virtual void endStub() {
+                clearParentInfo();
+            }
+
             virtual void printCastTypeName(const std::string &Cast) {
                 // Empty cast means no cast.
                 if(!Cast.empty()) {
@@ -386,6 +395,7 @@ namespace instances {
             virtual void printVariable(const std::string &S) {print(S);}
             virtual void printNewArg(const std::string &S) {print(S);}
             virtual void printFunctionName(const std::string &S) {startLine(S);}
+            virtual void printStub(const std::string &S) {print(S);}
 
             virtual void emitSingleString(const std::string &S) {
                 switch(getParentInfo()) {
@@ -404,6 +414,9 @@ namespace instances {
                     break;
                 case ParentInfo::StringNew:
                     printNewArg(S);
+                    break;
+                case ParentInfo::StringStub:
+                    printStub(S);
                     break;
                 case ParentInfo::Expression:
                     assert(S == "stdout"); // Single allowed case.

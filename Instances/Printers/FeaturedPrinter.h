@@ -122,12 +122,11 @@ namespace instances {
                 } else FlexiblePrinter::emitNew(Type, Size);
             }
 
-            void emitConst(const std::string &Const) override final {
-                size_t CS = Const.size();
-                if(SupportSmartPointers && (endsWith(Const,"[1]()") || endsWith(Const, "[0]"))) {
+            void emitStub(const std::string &Stub, bool Lvalue) override final {
+                if(SupportSmartPointers) {
                     // Find type and convert.
                     int StarCount = 1;
-                    for(auto C : Const) if(C == '*') StarCount++;
+                    for(auto C : Stub) if(C == '*') StarCount++;
 
                     static const char *Types[] = {
                         "char", "short", "int", "long long",
@@ -142,28 +141,29 @@ namespace instances {
 
                     int Type, Mod;
                     for(Type = 0; Type < TypesCount; Type++)
-                        if(Const.find(Types[Type]) != Const.npos)
+                        if(Stub.find(Types[Type]) != Stub.npos)
                             break;
                     assert(Type != TypesCount);
                     for(Mod = 0; Mod < ModsCount; Mod++)
-                        if(Const.find(Mods[Mod]) != Const.npos)
+                        if(Stub.find(Mods[Mod]) != Stub.npos)
                             break;
 
-                    std::string TypeStr;
+                    std::string ResultType;
                     if(Mod != ModsCount) {
-                        TypeStr.append(Mods[Mod]);
-                        TypeStr.push_back(' ');
+                        ResultType.append(Mods[Mod]);
+                        ResultType.push_back(' ');
                     }
-                    TypeStr.append(Types[Type]);
-                    while(StarCount--) TypeStr.push_back('*');
-                    TypeStr = ReplacePointerWithSmart(TypeStr);
-                    
-                    TypeStr.append("::alloc(1)");
-                    if(Const[Const.size() - 2] == '0') {
-                        TypeStr.append("[0]");
-                    }
-                    FlexiblePrinter::emitConst(TypeStr);
-                } else FlexiblePrinter::emitConst(Const);
+                    ResultType.append(Types[Type]);
+                    while(StarCount--) ResultType.push_back('*');
+                    ResultType = ReplacePointerWithSmart(ResultType);
+
+                    const int PrefixSize = sizeof("LvalueStub") - 1;
+                    std::string Result(Stub.begin(), Stub.begin() + PrefixSize);
+                    Result.push_back('<');
+                    Result.append(ResultType);
+                    Result.append(">()");
+                    FlexiblePrinter::emitStub(Result, Lvalue);
+                } else FlexiblePrinter::emitStub(Stub, Lvalue);
             }
 
             void emitDelete(const std::string &Var) override final {

@@ -49,15 +49,11 @@ namespace instances {
                 bool AllowSigned = !AllowUnsigned && ES->getAllowSigned();
                 bool AllowRvalue = ES->getAllowRvalue();
 
-                // For non-ptrs, there's ConstNK.
-                // So the stub expr is new expr.
-                // If no rvalue allowed, it is indexed.
-                if(AllowRvalue) PtrDepth--;
-                std::string NewExpr = "new ";
+                std::string NewExpr;
+                NewExpr.push_back(AllowRvalue ? 'R' : 'L');
+                NewExpr.append("valueStub<");
                 NewExpr.append(makeTypeName(PtrDepth, BaseSizeExp, AllowFloat, AllowSigned, false));
-                NewExpr.append("[1]()");
-                if(!AllowRvalue)
-                    NewExpr = "(" + NewExpr + ")[0]";
+                NewExpr.append(">()");
                 OperandsScopes.push_back(new SingleStringScope(NewExpr, true));
             }
 
@@ -68,10 +64,10 @@ namespace instances {
                 switch(Part) {
                 default: throw "Invalid children count";
                 case 0:
-                    SP->startConst();
+                    SP->startStub();
                     break;
                 case 1:
-                    SP->endConst();
+                    SP->endStub();
                     break;
                 }
             }

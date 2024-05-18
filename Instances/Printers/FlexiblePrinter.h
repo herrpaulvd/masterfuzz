@@ -470,6 +470,18 @@ namespace instances {
 
             //***//
 
+            //*** Stub ***//
+
+            void startStub() override final {
+                SimplePrinter::startStub();
+            }
+
+            void endStub() override final {
+                SimplePrinter::endStub();
+            }
+
+            //***//
+
             //*** Single String emitions ***//
 
             void printCastTypeName(const std::string &Cast) override final {
@@ -502,6 +514,17 @@ namespace instances {
 
             void printFunctionName(const std::string &Name) override final {
                 Calls.push(new CallInfo(Name));
+            }
+
+            virtual void emitStub(const std::string &Stub, bool Lvalue) {
+                print(Stub);
+            }
+
+            void printStub(const std::string &Stub) override final {
+                bool Lvalue = Stub[0] == 'L';
+                emitOperationInit(Lvalue);
+                emitStub(Stub, Lvalue);
+                emitOperationEnd();
             }
 
             void emitSingleString(const std::string &S) override final {

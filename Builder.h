@@ -177,6 +177,9 @@ SimplePrinter *buildPrinter(
         Header.push_back("#include <wchar.h>");
     }
 
+    Header.push_back("template<typename T> T RvalueStub() {static T rvalue = (T)0; return rvalue;}");
+    Header.push_back("template<typename T> T& LvalueStub() {static T lvalue; lvalue = (T)0; return lvalue;}");
+
     if(FP || EnableUniquePrint || OutsideFunction || PrintAfterDelete)
         Header.push_back("#define NOINLINE __attribute__((noipa))");
 

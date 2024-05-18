@@ -14,8 +14,8 @@ compiler="ntox86-g++-8.3.0 -O2 -fPIE -Warray-bounds -Wdiv-by-zero \
     -D_FORTIFY_SOURCE=2 -Wclobbered -fwrapv -fwrapv-pointer -fno-strict-aliasing \
     -fno-delete-null-pointer-checks -fno-builtin"
 
-generator="build/Generators/SimpleGenerator/SimpleGenerator 64"
-decoder="build/Decoders/UB/DecoderUB SD"
+generator="build/Generators/SimpleGenerator/SimpleGenerator 256"
+decoder="build/Decoders/UB/DecoderUB 0"
 checker="build/Checkers/EqualityChecker/EqualityChecker $tempfile1 $tempfile2"
 fuzzer="build/SimpleFuzzer/SimpleFuzzer"
 
@@ -23,7 +23,7 @@ ninja -C build || exit 1
 mkdir -p $workspace
 rm $workspace/*
 rm -r $workspace/*
-$fuzzer "$generator" "$decoder" "$checker" "$bincode" "$source1" "$source2" "$prg" "$compiler"
+time $fuzzer "$generator" "$decoder" "$checker" "$bincode" "$source1" "$source2" "$prg" "$compiler"
 
 export SCP=
 export SSH=
