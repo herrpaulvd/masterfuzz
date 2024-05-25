@@ -68,7 +68,8 @@ template<
     bool EnableShifts, // << and >>
     bool EnableLoops, // do we require loops
     bool NoFloat, // prohibit floats
-    bool DisableDangerous // prohibit any operation causing RE except [] and funcs
+    bool DisableDangerous, // prohibit any operation causing RE except [] and funcs
+    bool DisableUnsequenced = false
 > inline Decoder *buildDecoder(
     std::vector<VariableBuilder> Variables,
     std::vector<FunctionBuilder> Functions
@@ -94,11 +95,13 @@ template<
         NodeKinds.push_back(WhileNK::get(true));
     }
 
+    bool StatementOnly = false;
     #define MEMORY(op) if(EnableMemory) op
     #define SHIFT(op) if(EnableShifts) op
     #define DANGEROUS(op) if(!DisableDangerous) op
+    #define SIDEEFFECT(op) {StatementOnly = DisableUnsequenced; op; StatementOnly = false;}
     #define OPERATION(Op, AllowFloat, Suffix, Kind) \
-        NodeKinds.push_back(new OperationNK(Op, AllowFloat, Suffix, OpKind::Kind));
+        NodeKinds.push_back(new OperationNK(Op, AllowFloat, Suffix, OpKind::Kind, StatementOnly));
     #include "Include/AllOperations.inc"
     #undef MEMORY
     #undef SHIFT
@@ -178,7 +181,7 @@ SimplePrinter *buildPrinter(
     }
 
     Header.push_back("template<typename T> T RvalueStub() {static T rvalue = (T)0; return rvalue;}");
-    Header.push_back("template<typename T> T& LvalueStub() {static T lvalue; lvalue = (T)0; return lvalue;}");
+    Header.push_back("template<typename T> T& LvalueStub() {static T lvalue = (T)0; return lvalue;}");
 
     if(FP || EnableUniquePrint || OutsideFunction || PrintAfterDelete)
         Header.push_back("#define NOINLINE __attribute__((noipa))");

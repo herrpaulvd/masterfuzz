@@ -45,6 +45,8 @@ int main(int argc, char **argv) {
         D = buildDecoder<false, false, false, true, false>(Variables, NoFunctions);
     else if(Config == "SD")
         D = buildDecoder<false, true, false, true, false>(Variables, NoFunctions);
+    else if(Config == "--")
+        D = buildDecoder<false, false, false, true, true, true>(Variables, NoFunctions);
     ASTNode *Tree = D->GenerateAST(&BS);
     BS.close();
 

@@ -38,16 +38,18 @@ namespace instances {
             const char *Op;
             bool AllowFloat : 1;
             bool Suffix : 1; // Does matter only when printing.
+            bool StatementOnly : 1;
             OpKind Kind;
         public: 
-            OperationNK(const char *Op, bool AllowFloat, bool Suffix, OpKind Kind)
-                : Op(Op), AllowFloat(AllowFloat), Suffix(Suffix), Kind(Kind) {}
+            OperationNK(const char *Op, bool AllowFloat, bool Suffix, OpKind Kind, bool StatementOnly = false)
+                : Op(Op), AllowFloat(AllowFloat), Suffix(Suffix), Kind(Kind), StatementOnly(StatementOnly) {}
 
             bool getInfoFields(const Scope *S, std::vector<int> &Sizes) const
                 override {
                 // Shortness is not allowed for complex nodes.
                 if(S->isShort()) return false;
                 if(const ExpressionScope *ES = dynamic_cast<const ExpressionScope *>(S)) {
+                    if(StatementOnly) return false;
                     // Which kinds cannot return ptr.
                     if(ES->getPtrDepthMin() > 0)
                         switch (Kind) {

@@ -11,8 +11,7 @@ int main(int argc, char **argv) {
     out.tie(0);
     unsigned long long time = std::chrono::high_resolution_clock::now().time_since_epoch() / std::chrono::nanoseconds(1);
     std::mt19937_64 random(time);
-    int total = random() % limit;
-    while(total--) out << (char)random();
+    while(limit--) out << (char)random();
     out.flush();
     out.close();
     return 0;
